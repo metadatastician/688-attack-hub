@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC-BY-SA-4.0
 // SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
-= AFFIRMATION — 688 Attack Hub, as of the anchor commit below
+= AFFIRMATION — 688 Attack Hub, as of 0dca820
 :toc: macro
 :toclevels: 2
 
@@ -41,13 +41,21 @@ checked, it is named as such rather than implied.
 |===
 | Field | Value
 
-| Commit | the initial-import commit on `main` that carries this exact file — see the repository's commit log for its SHA (this file is landed in that same commit, so it cannot cite its own hash in advance; verify against whichever commit's `git show` includes this text)
+| Commit | `0dca820da567d3ef7b9f39a6484fec936e7eb4fb` (the initial-import commit itself — this file was landed inside it, so the SHA below was filled in by a small follow-up commit after confirming it against `git log`)
 | Branch | `main`
-| Timestamp (UTC) | 2026-07-21
+| Timestamp (UTC) | 2026-07-21T23:15Z
 | Runtime | any modern browser (play); no build toolchain required
 | Dependencies installed | none — there are none to install
-| Commands run | manual inspection of `688-attack-hub.html` (`grep` for network/eval primitives, `wc`, `head`/`tail`), `gh repo view`/`gh api` against `hyperpolymath/rsr-template-repo` and `metadatastician/f19-stealth-glider`
+| Commands run | manual inspection of `688-attack-hub.html` (`grep` for network/eval primitives, `wc`, `head`/`tail`), `gh repo view`/`gh api` against `hyperpolymath/rsr-template-repo` and `metadatastician/f19-stealth-glider`, `gh run list`/`gh run view` against this repo's own `ci` and `pages` workflows, `curl`+`diff` against the published GitHub Pages site
 |===
+
+This affirmation is also extended, not just anchored, by what happened
+*after* the commit: `ci.yml`'s `repository integrity` job ran green against
+this exact commit, and `pages.yml` published `688-attack-hub.html` to
+<https://metadatastician.github.io/688-attack-hub/>, confirmed byte-identical
+to the committed file via `curl | diff`. GitHub Pages itself had to be
+enabled via the API (`POST /repos/.../pages`) before the first deploy
+succeeded — a one-time repo-settings step, not a code defect, and now done.
 
 == What we affirm
 
