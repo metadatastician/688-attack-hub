@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: CC-BY-SA-4.0
 // Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
-= Audit Gate
+= 688 Attack Hub — Audit Gate
 Codex
-v1.1, 2026-04-07
+v1.1, 2026-07-21
 :toc:
 :toclevels: 2
 :sectnums:
 
-== Purpose
+== Purpose (estate-wide gate)
 
 This root document exists so humans and bots can see the hard audit posture
 without having to discover the standards repository first.
@@ -46,3 +46,61 @@ Read these as the authoritative source:
 Bots operating in repositories derived from this template should treat this
 document as a key root audit document and should not make optimistic release or
 publication claims that conflict with it.
+
+== This repository specifically
+
+What is verified, what is merely asserted, and what is explicitly *not*
+claimed about 688 Attack Hub in particular.
+
+=== Verified (grep-checked, CI-enforced)
+
+* The game makes zero network calls — no `fetch`, `XMLHttpRequest`,
+  `WebSocket` — and contains no `eval`/`new Function` dynamic-code
+  execution. Checked by hand at repo creation and re-checked on every push
+  by `ci.yml`'s `integrity` job.
+* `688-attack-hub.html` is present, non-empty, and structurally valid HTML
+  (`<!DOCTYPE html>` ... `</html>`).
+* No `.a2ml` file in the tree is missing an SPDX header.
+* No unsubstituted doubled-brace template tokens survive anywhere in the
+  tree (`ci.yml`'s placeholder check).
+* Every GitHub Actions `uses:` is pinned to a full 40-character commit SHA.
+
+=== Asserted, not mechanically checked
+
+* That the game is "original fictional content" and not derived from the
+  1997 commercial game "688(I) Hunter/Killer" / "688 Attack Sub". This was a
+  one-time manual check at repo creation (no copyright strings, asset names,
+  or code from that game appear in the file) — it is not re-verified by CI,
+  because there's nothing to grep for that would meaningfully strengthen the
+  claim beyond the initial read.
+* That the internet-exchange-point names and coordinates in `REGIONS` are
+  drawn from real public IXP data (LINX, DE-CIX, AMS-IX, etc. at their
+  approximate real coordinates) — this is flavour accuracy, not a functional
+  claim, and isn't tested.
+* That the countermeasure escalation (`CMS`) and upgrade balance produce a
+  "fun" or "balanced" experience. This is a design/taste judgement, not
+  something this repo tries to prove.
+
+=== Explicitly NOT claimed
+
+* **No formal verification ledger.** Unlike `f19-stealth-glider` (this org's
+  other single-file browser game, which has an 11-claim verification ledger
+  backed by runnable proof scripts), 688 Attack Hub makes no formal claims
+  about its own correctness. There is no frozen "level geometry" or
+  geometric lemma to prove here — it's an idle/strategy toy, and pretending
+  otherwise would be false rigor.
+* **No accessibility audit.** The game has not been tested against WCAG
+  criteria. If that matters to you, treat it as unaudited until someone
+  actually runs one.
+* **No performance/load claims.** The `step()` tick loop has not been
+  profiled or stress-tested at any scale beyond normal play.
+* **No security hardening claims beyond "makes no network calls."** See
+  `SECURITY.md` for the deliberately small threat model this repo actually
+  considers in scope.
+
+=== Why the CI job is named `integrity`, not `verify`
+
+Naming it `verify` would imply parity with f19-stealth-glider's verification
+ledger, which this repo does not have. `integrity` names what the job
+actually checks: that the repository's physical state matches what the docs
+claim, not that any game-design property has been proven.

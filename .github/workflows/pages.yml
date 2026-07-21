@@ -1,8 +1,32 @@
-# SPDX-License-Identifier: MPL-2.0
-# GitHub Pages via casket-ssg (hyperpolymath's pure-Haskell static site generator).
-# Replaces the orphan one-off Pages deployment with a reproducible build.
-name: GitHub Pages
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Publish the playable bundle to GitHub Pages.
+#
+# The game is a single self-contained HTML file with no dependencies, so the
+# "site" is that file served as index.html. Neither of this estate's own
+# static-site generators (ddraig-ssg, casket-ssg) applies here: both turn
+# Markdown into a multi-page site, and this artefact has no Markdown content
+# to render — it is one pre-built interactive page. There is nothing to build.
+#
+# This workflow does NOT run on pull requests, deliberately — deploying a PR
+# to the live site would publish unreviewed content.
+#
+# ── Why the artifact is packed by hand ───────────────────────────────────────
+# The obvious step here is actions/upload-pages-artifact. It cannot be used in
+# this organisation: it internally calls actions/upload-artifact@v4 by TAG,
+# and the org requires every action — including transitive ones — to be pinned
+# to a full-length commit SHA. Using it fails at startup with an
+# unpinned-transitive-action error, and startup_failure is the worst kind of
+# red because it reads as a check that never ran rather than one that failed.
+#
+# So the two things upload-pages-artifact does are done explicitly below:
+# build the deterministic tarball it would have built, and upload it under the
+# artifact name `github-pages` that actions/deploy-pages expects. Every
+# `uses:` here is SHA-pinned, and there are no transitive action calls left to
+# violate the policy. (Matches the pattern already proven working in
+# metadatastician/f19-stealth-glider's pages.yml.)
 
+name: pages
 on:
   push:
     branches: [main]
@@ -13,78 +37,62 @@ permissions:
   pages: write
   id-token: write
 
-# Serialise Pages deploys; never cancel an in-flight deploy.
+# Never cancel an in-flight deployment; let it finish and queue the next.
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: false
 
 jobs:
   build:
-    timeout-minutes: 20
+    name: assemble site
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Checkout casket-ssg
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          repository: hyperpolymath/casket-ssg
-          path: .casket-ssg
-
-      - name: Setup GHCup
-        uses: haskell-actions/setup@cd0d9bdd65b20557f41bea4dbe43d0b5fbbfe553 # v2.11.0
-        with:
-          ghc-version: '9.8.2'
-          cabal-version: '3.10'
-
-      - name: Cache Cabal
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v4
-        with:
-          path: |
-            ~/.cabal/packages
-            ~/.cabal/store
-            .casket-ssg/dist-newstyle
-          key: ${{ runner.os }}-casket-${{ hashFiles('.casket-ssg/casket-ssg.cabal') }}
-
-      - name: Build casket-ssg
-        working-directory: .casket-ssg
-        run: cabal build
-
-      - name: Build site
+      - name: Assemble the site from the committed bundle
         run: |
-          mkdir -p site _site
-          # Seed site/index.md from README if the author hasn't provided one.
-          if [ ! -f site/index.md ]; then
-            {
-              echo "---"
-              echo "title: $(basename "$PWD")"
-              echo "date: $(date +%Y-%m-%d)"
-              echo "---"
-              if [ -f README.adoc ]; then cat README.adoc
-              elif [ -f README.md ]; then cat README.md
-              else printf '\n# %s\n\nDocumentation coming soon.\n' "$(basename "$PWD")"
-              fi
-            } > site/index.md
-          fi
-          cd .casket-ssg && cabal run casket-ssg -- build ../site ../_site
+          set -euo pipefail
+          test -f 688-attack-hub.html
+          mkdir -p _site
+          cp 688-attack-hub.html _site/index.html
+          cp 688-attack-hub.html _site/688-attack-hub.html
+          mkdir -p _site/.well-known
+          cp .well-known/*.txt _site/.well-known/
+          # Bypass Jekyll — this is a plain static file, not a Jekyll source tree.
+          touch _site/.nojekyll
+          echo "site assembled ($(wc -c < _site/index.html) bytes)"
 
-      - name: Setup Pages
-        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      # Exactly what actions/upload-pages-artifact packs, done inline so no
+      # unpinned transitive action is involved. Deploy expects a single
+      # artifact.tar at the root of an artifact named `github-pages`.
+      - name: Pack the Pages artifact
+        run: |
+          set -euo pipefail
+          tar \
+            --dereference --hard-dereference \
+            --directory _site \
+            -cvf "${RUNNER_TEMP}/artifact.tar" \
+            --exclude=.git \
+            --exclude=.github \
+            .
+          echo "packed $(wc -c < "${RUNNER_TEMP}/artifact.tar") bytes"
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v3
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          path: '_site'
+          name: github-pages
+          path: ${{ runner.temp }}/artifact.tar
+          retention-days: 1
+          if-no-files-found: error
 
   deploy:
-    timeout-minutes: 20
+    name: deploy to github-pages
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

@@ -1,34 +1,59 @@
-# SPDX-License-Identifier: MPL-2.0
-# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
-#
-# AI-MANIFEST.a2ml — AI agent work allocation and policy
-#
-[metadata]
-version = "0.1.0"
-last-updated = "{{CURRENT_DATE}}"
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# 0-AI-MANIFEST.a2ml — Root AI manifest for 688 Attack Hub
 
-[project]
-name = "[YOUR-REPO-NAME]"
-purpose = "{{PROJECT_DESCRIPTION}}"
+## Purpose
 
-[ai-allocation]
-agents = [
-  { name = "CLAUDE", role = "proofs, compilers, repo-local implementation, CI/CD, formal verification, Rust/Idris2/Zig" },
-  { name = "CHATGPT", role = "prose, papers, publication review, standards docs, outreach drafts, letters" },
-  { name = "GEMINI", role = "estate audits, cross-repo sweeps, long-context triage, pattern detection" },
-  { name = "VIBE", role = "UI/frontend, PanLL panels, ReScript components, theming, rapid prototyping" },
-]
+This is the root AI-assistant manifest for **688 Attack Hub**, a browser
+idle/strategy toy. Read this first, then
+`.machine_readable/descriptiles/STATE.a2ml`, then `README.md`.
 
-[policy]
-rules = [
-  "Do not duplicate tasks across sections. If a task needs multiple LLMs, note the handoff.",
-  "Update THIS file during sessions. Do NOT recreate per-repo TODO files.",
-]
+The repository is a single self-contained HTML file with no build system, no
+package registry dependency, and no runtime service. There is no source tree
+to navigate — everything is in `688-attack-hub.html`.
 
-[work-allocation]
-items = [
-  { agent = "CLAUDE", task = "proofs, compilers, repo-local implementation, CI/CD, formal verification, Rust/Idris2/Zig" },
-  { agent = "CHATGPT", task = "prose, papers, publication review, standards docs, outreach drafts, letters" },
-  { agent = "GEMINI", task = "estate audits, cross-repo sweeps, long-context triage, pattern detection" },
-  { agent = "VIBE", task = "UI/frontend, PanLL panels, ReScript components, theming, rapid prototyping" },
-]
+## Where things live
+
+- `688-attack-hub.html` — the entire game: data (`REGIONS`, `EDGES`, `LAND`,
+  `UPGRADES`, `CMS`), state (`S`), and the render/update loop (`step`,
+  `paintMap`, `paintUps`, `click`, `buy`). See `ARCHITECTURE.md` for the full
+  breakdown.
+- `README.md`, `ARCHITECTURE.md`, `EXPLAINME.adoc`, `AUDIT.adoc`,
+  `AFFIRMATION.adoc`, `GOVERNANCE.adoc` — the human documentation set.
+  **`AUDIT.adoc` is authoritative on what is and isn't verified** — this
+  repo makes deliberately fewer formal claims than its sibling
+  `f19-stealth-glider`, and should not be made to sound more rigorously
+  verified than it is.
+- `.machine_readable/` — `descriptiles/` (STATE, META, ECOSYSTEM, AGENTIC,
+  NEUROSYM, PLAYBOOK) + `contractiles/` (Must/Trust/Bust/Intend/Adjust/Dust)
+  + `rsr-profile.a2ml` (declared capabilities).
+- `.well-known/` — `ai.txt`, `humans.txt`, `security.txt`.
+
+## Invariants (read before editing)
+
+- **This is fictional flavour, not a real network tool.** The upgrades,
+  countermeasures, and "spread" mechanic are jokes about real network
+  engineering (spanning-tree, DHCP, BGP hygiene), not functional exploit
+  code. Do not add real target data, a real exploit primitive, or any
+  network call — doing so would falsify `AUDIT.adoc`'s central claim and
+  `ci.yml`'s network/eval check would (correctly) fail the build.
+- **No network calls, ever.** `ci.yml` greps for `fetch(`, `XMLHttpRequest`,
+  `WebSocket`, `eval(`, `new Function(` on every push. This is load-bearing
+  for the "makes no network calls" claim throughout the docs — don't relax
+  the check to make a feature pass; redesign the feature instead.
+- **One self-contained file, no build step.** Do not introduce a bundler,
+  a package dependency, or a static-site generator to serve the game itself
+  — `pages.yml` deploys `688-attack-hub.html` directly, by design, matching
+  `f19-stealth-glider`'s proven pattern. (Neither of this estate's own SSGs,
+  `ddraig-ssg` or `casket-ssg`, applies here: both render Markdown, and this
+  artefact has none to render.)
+- **Do not invent a verification ledger.** This repo has no
+  `VERIFICATION.md` and no `src/verify*.mjs` scripts, unlike
+  `f19-stealth-glider`. That is a deliberate choice recorded in
+  `AUDIT.adoc`/`EXPLAINME.adoc` — there is no comparable formal structure
+  (frozen level geometry, provable lemma) to verify here. Adding aspirational
+  "proof" language would be false rigor.
+- Licence is AGPL-3.0-or-later for all code and docs, matching the
+  `metadatastician` org convention. SPDX header as the first line of every
+  `.a2ml` file; CI enforces that.
+- State/metadata belongs under `.machine_readable/`, not the repository
+  root. The root carries only `0-AI-MANIFEST.a2ml`.

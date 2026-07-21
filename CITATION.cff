@@ -1,17 +1,27 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
+title: "688 Attack Hub"
+abstract: >-
+  A browser idle/strategy toy in which the player spreads an unmanaged
+  network repeater (AS688) across real-world internet exchange points —
+  LINX, DE-CIX, AMS-IX, and 17 others at their real coordinates — while a
+  NOC attention meter climbs toward six escalating countermeasures and a
+  final loss condition. Self-contained single HTML file, no dependencies,
+  no network calls, no formal claims.
+type: software
 authors:
-- family-names: "{{AUTHOR_LAST}}"
-  given-names: "{{AUTHOR_FIRST}}"
-  orcid: "https://orcid.org/0000-0000-0000-0000" # Placeholder
-title: "{{PROJECT_NAME}}"
-version: 0.1.0
-date-released: "{{CURRENT_DATE}}"
-url: "https://{{FORGE}}/{{OWNER}}/{{REPO}}"
-repository-code: "https://{{FORGE}}/{{OWNER}}/{{REPO}}"
-license: MPL-2.0
+  - family-names: "Jewell"
+    given-names: "Jonathan D. A."
+    alias: "hyperpolymath"
+version: "0.1.0"
+date-released: "2026-07-21"
+url: "https://metadatastician.github.io/688-attack-hub/"
+repository-code: "https://github.com/metadatastician/688-attack-hub"
+license: AGPL-3.0-or-later
 keywords:
-  - "rsr"
-  - "formal-verification"
-  - "neurosymbolic"
-  - "provenance"
+  - "idle game"
+  - "strategy game"
+  - "game design"
+  - "internet exchange points"
+  - "network simulation"
+  - "javascript"

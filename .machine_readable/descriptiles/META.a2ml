@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MPL-2.0
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 #
 # META.a2ml — Project meta-level information
@@ -6,48 +6,27 @@
 
 [metadata]
 version = "0.1.0"
-last-updated = "2026-04-11"
+last-updated = "2026-07-21"
 
 [project-info]
-type = "library"  # TODO: update type (library|binary|service|website|monorepo)  # library | binary | monorepo | service | website
-languages = []             # e.g. ["rust", "zig", "idris2"]
-license = "MPL-2.0"
+type = "browser game"
+languages = ["javascript"]
+license = "AGPL-3.0-or-later"
 author = "Jonathan D.A. Jewell (hyperpolymath)"
 
 [architecture-decisions]
-# ADR format: status = proposed | accepted | deprecated | superseded | rejected
-# - { id = "ADR-001", title = "Use Zig for FFI", status = "accepted", date = "2026-02-14" }
+decisions = [
+  { id = "D-01", title = "Single self-contained HTML file, no build", status = "accepted", date = "2026-07-21", rationale = "Zero-install, zero-dependency distribution. Matches the sibling f19-stealth-glider precedent." },
+  { id = "D-02", title = "No formal verification ledger", status = "accepted", date = "2026-07-21", rationale = "Unlike f19-stealth-glider, this game has no frozen level geometry or provable design property. Inventing one would be false rigor — see AUDIT.adoc." },
+  { id = "D-03", title = "AGPL-3.0-or-later licensing", status = "accepted", date = "2026-07-21", rationale = "Matches the metadatastician org convention, per LICENCE-POLICY.adoc Rule 3, rather than the general MPL-2.0 fallback." },
+  { id = "D-04", title = "pages.yml hand-packs the Pages artifact", status = "accepted", date = "2026-07-21", rationale = "actions/upload-pages-artifact is unusable under this org's SHA-pin-everything policy (transitive unpinned action). Packed inline instead, matching f19-stealth-glider's proven pattern." },
+  { id = "D-05", title = "Neither ddraig-ssg nor casket-ssg is used to serve the game", status = "accepted", date = "2026-07-21", rationale = "Both are Markdown-to-site generators; this artefact has no Markdown to render, only one pre-built interactive HTML page." },
+]
 
 [development-practices]
-build-tool = "just"
-container-runtime = "podman"
+build-tool = "none"
 ci-platform = "github-actions"
-package-manager = "guix"  # guix | cargo | mix
-
-[maintenance-axes]
-scoping-first = true
-execution-order = "axis-1 > axis-2 > axis-3"
-axis-1 = "must > intend > like"
-axis-2 = "corrective > adaptive > perfective"
-axis-3 = "systems > compliance > effects"
-
-[scoping]
-sources = "README, roadmap, status docs, maintenance checklist, CI/security docs"
-marker-scan = "TODO/FIXME/XXX/HACK/STUB/PARTIAL"
-idris-unsound-scan = "believe_me/assert_total"
-
-[axis-2-maintenance-rules]
-corrective-first = true
-adaptive-second = true
-adaptive-focus = "scope-change reconciliation, stale-reference removal, obsolete-work culling"
-perfective-third = true
-perfective-source = "axis-1 honest state after corrective/adaptive updates"
-
-[axis-3-audit-rules]
-audit-focus = "systems in place, documentation explains actual state, safety/security accounted for, observed effects reviewed"
-compliance-focus = "seams/compromises/exception register, bounded exceptions, anti-drift checks"
-drift-risk-example = "single exception broadening into policy violation (e.g. ReScript->TypeScript spread)"
-effects-evidence = "benchmark execution/results and maintainer status dialogue/review"
+package-manager = "none"
 
 [design-rationale]
-# Key design decisions and their reasoning
+notes = "The entire design surface is described in ARCHITECTURE.md. There is no separate build/package layer to document here because there is none."

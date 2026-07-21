@@ -1,0 +1,15 @@
+{
+  "name": "688-attack-hub",
+  "version": "0.1.0",
+  "description": "AS688 · 10BASE-T · Unmanaged repeater · 20 port — an idle/strategy toy about spreading a network repeater across the world's real internet exchange points.",
+  "type": "module",
+  "license": "AGPL-3.0-or-later",
+  "author": "Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>",
+  "private": false,
+  "scripts": {
+    "serve": "python3 -m http.server 8000"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

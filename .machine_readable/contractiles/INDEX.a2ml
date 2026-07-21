@@ -1,133 +1,94 @@
-# SPDX-License-Identifier: MPL-2.0
-# INDEX.a2ml — Contractile Registry
-# Author: Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# INDEX.a2ml — Contractile Registry for 688 Attack Hub
+# Author: Jonathan D.A. Jewell (hyperpolymath)
 #
-# Machine-readable catalogue of all contractile verbs in this template set.
-# Consumers (CI scripts, the contractile CLI, Hypatia rules) SHOULD read this
-# file to discover available verbs rather than hard-coding the list.
-#
-# See: docs/CONTRACTILE-SPEC.adoc §Registry
+# Machine-readable catalogue of the contractile verbs carried by this repo.
 
 ---
 id = "contractiles-registry"
-version = "2.0.0"   # 2.0.0 (2026-04-18): all 6 verbs on trident shape; verb set complete.
-spec = "docs/CONTRACTILE-SPEC.adoc"
-last_updated = "2026-04-18"
-base_schema = ".machine_readable/contractiles/_base.ncl"
-meta_schema_status = "pending — see CONTRACTILE-SPEC §validator-meta-schema"
+version = "1.0.0"
+spec = "hyperpolymath/standards docs/CONTRACTILE-SPEC.adoc"
+last_updated = "2026-07-21"
+layout = "flat"
+
+## Runner note
+
+# The canonical trident is (Xfile.a2ml, x.ncl, x.k9.ncl). This repository
+# ships only the .a2ml declaration for each verb — no .ncl / .k9.ncl runners
+# and no runner script — because there is no automated executor for these
+# probes anywhere in the estate yet, matching the reasoning already applied
+# in metadatastician/f19-stealth-glider. Committing non-executable Nickel
+# scaffolding here would be exactly the false-green pattern contractiles
+# exist to catch.
+#
+# Each Xfile.a2ml below is read as documentation of the invariant, not a
+# script that runs. Where a probe genuinely IS mechanically checked, it says
+# so and names the real check (ci.yml, not a fictional runner).
 
 ## Verbs
 
 [[verbs]]
-name = "adjust"
-semantics = "drift tolerances + corrective actions"
-trident = [
-  "adjust/Adjustfile.a2ml",
-  "adjust/adjust.ncl",
-  "adjust/adjust.k9.ncl",
-]
-manifest = "adjust/adjust.manifest.a2ml"
-status = "active"
-tier = "Yard"
-authority = "advisory"
-gating = "advisory (continue-with-warnings)"
-cardinality = "one per repo"
-notes = "Fifth trident instance (2026-04-18). First (Yard, advisory) authority pattern. Specialises in cumulative-drift catchment — tolerance bands + trend tracking across sessions. auto_fix_when_available applies deterministic patches; advisory otherwise."
-
-[[verbs]]
-name = "bust"
-semantics = "hard-stop / expiry / must-not-run declarations"
-trident = [
-  "bust/Bustfile.a2ml",
-  "bust/bust.ncl",
-  "bust/bust.k9.ncl",
-]
-manifest = "bust/bust.manifest.a2ml"
-status = "active"
-tier = "Hunt-read-only"
-authority = "blocking"
-gating = "hard (exit-nonzero)"
-cardinality = "one per repo"
-notes = "Fourth trident instance (2026-04-18). Completes the blocking-authority triple (must + trust + bust). Specialises in deprecated-path-reintroduction catchment. Injects failures via declared probes and verifies recovery paths."
-
-[[verbs]]
-name = "dust"
-semantics = "rollback / recovery / deprecation / audit-trail preservation"
-trident = [
-  "dust/Dustfile.a2ml",
-  "dust/dust.ncl",
-  "dust/dust.k9.ncl",
-]
-manifest = "dust/dust.manifest.a2ml"
-status = "active"
-tier = "Yard"
-authority = "advisory"
-gating = "advisory (continue-with-warnings)"
-cardinality = "one per repo"
-notes = "Sixth and FINAL trident instance (2026-04-18) — completes the full verb set. Specialises in audit-trail preservation + rollback-path verification. Destructive actions gated behind --apply flag + per-item approval; dry-run default."
-
-[[verbs]]
-name = "intend"
-semantics = "north-star (commitments + aspirations)"
-trident = [
-  "intend/Intentfile.a2ml",
-  "intend/intend.ncl",
-  "intend/intend.k9.ncl",
-]
-manifest = "intend/intend.manifest.a2ml"
+name = "must"
+semantics = "physical-state hard requirements"
+files = ["must/Mustfile.a2ml"]
 status = "active"
 tier = "Hunt"
-authority = "reporting"
-gating = "non-gating (continue)"
-cardinality = "one per repo"
-notes = "First trident instance in the estate (2026-04-18). Reports progress toward committed next-actions AND lists horizon aspirations. Absorbed the deprecated `lust` verb 2026-04-18. Never blocks. Remaining 5 verbs still on file_pair shape until tridents are built."
-
-[[verbs]]
-name = "k9"
-semantics = "trust-tier templates (EXCEPTION to one-verbfile rule)"
-file_pair = [
-  "k9/template-hunt.k9.ncl",
-  "k9/template-kennel.k9.ncl",
-  "k9/template-yard.k9.ncl",
-]
-status = "exception"
-gating = "not applicable"
-notes = "k9 is service-automation meta-infrastructure, not a verb contractile. Three trust-tier templates (Kennel/Yard/Hunt). Does not have a Verbfile.a2ml. See CONTRACTILE-SPEC §k9-exception."
-
-# [[verbs]] lust REMOVED 2026-04-18 — name had unwanted associations;
-# the horizon/aspiration semantics were always meant to live inside `intend`
-# (the north-star verb). The [[wishes]] schema was absorbed into
-# intend/Intentfile.a2ml. Any `lust/` dir found in an estate repo is drift
-# and should be deleted.
-
-[[verbs]]
-name = "must"
-semantics = "invariant assertion — release-blocking"
-trident = [
-  "must/Mustfile.a2ml",
-  "must/must.ncl",
-  "must/must.k9.ncl",
-]
-manifest = "must/must.manifest.a2ml"
-status = "active"
-tier = "Hunt-read-only"
 authority = "blocking"
-gating = "hard (exit-nonzero)"
+gating = "hard where cited; documentary otherwise"
 cardinality = "one per repo"
-notes = "Third trident instance (2026-04-18). Completes the blocking-authority pair with trust: must = concrete + persistent invariants; trust = concrete + ephemeral transactions. Specialises in subtle invariant-erosion (tracking per-session trend; flagging silent regression). Single failure blocks merge. Simplest and most commonly populated verb."
+notes = "File presence, no-network invariant, licence texts vendored, CI integrity. Several entries here ARE mechanically enforced by ci.yml; the file says which."
 
 [[verbs]]
 name = "trust"
-semantics = "security + provenance + safe-hacking"
-trident = [
-  "trust/Trustfile.a2ml",
-  "trust/trust.ncl",
-  "trust/trust.k9.ncl",
-]
-manifest = "trust/trust.manifest.a2ml"
+semantics = "trust boundaries + integrity invariants"
+files = ["trust/Trustfile.a2ml"]
 status = "active"
 tier = "Hunt"
 authority = "blocking"
-gating = "hard (exit-nonzero)"
+gating = "documentary"
 cardinality = "one per repo"
-notes = "Second trident instance (2026-04-18). First (Hunt, blocking) verb — hard gate. Primary defense against threat-model misclassification (B1) and 'turn off the firewall' capability-collapse (C2). Inherits on_open negotiation+accountability+translation from intend.k9.ncl v2.0.0; adds threat_model_foregrounding + block_session_close_on_critical_drift."
+notes = "Trust level 'minimal'. The operative risk is an agent quietly adding a network call or exec primitive to make a feature easier, which would falsify AUDIT.adoc without breaking anything visible."
+
+[[verbs]]
+name = "bust"
+semantics = "failure modes + hard-stop conditions"
+files = ["bust/Bustfile.a2ml"]
+status = "active"
+tier = "Hunt-read-only"
+authority = "documentary"
+gating = "documentary"
+cardinality = "one per repo"
+notes = "This project has had no incidents yet — entries are declared, not verified-by-occurrence, unlike f19-stealth-glider's Bustfile."
+
+[[verbs]]
+name = "intend"
+semantics = "committed next-actions + horizon aspirations"
+files = ["intend/Intentfile.a2ml"]
+status = "active"
+tier = "Kennel"
+authority = "advisory"
+gating = "none (report only)"
+cardinality = "one per repo"
+notes = "North-star contractile. Declares the purpose and the anti-purpose."
+
+[[verbs]]
+name = "adjust"
+semantics = "drift tolerances + corrective actions"
+files = ["adjust/Adjustfile.a2ml"]
+status = "active"
+tier = "Yard"
+authority = "advisory"
+gating = "advisory (continue-with-warnings)"
+cardinality = "one per repo"
+notes = "Tracks drift risks specific to a docs-heavy, code-light repo: documentation claims outrunning what the game actually does."
+
+[[verbs]]
+name = "dust"
+semantics = "cleanup + hygiene"
+files = ["dust/Dustfile.a2ml"]
+status = "active"
+tier = "Yard"
+authority = "advisory"
+gating = "advisory (continue-with-warnings)"
+cardinality = "one per repo"
+notes = "Housekeeping — mainly guarding against re-accumulating the maximal-template scaffolding this repo deliberately pruned."

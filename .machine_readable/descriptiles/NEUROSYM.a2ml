@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MPL-2.0
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 #
 # NEUROSYM.a2ml — Neurosymbolic integration metadata
@@ -6,18 +6,18 @@
 
 [metadata]
 version = "0.1.0"
-last-updated = "2026-04-11"
+last-updated = "2026-07-21"
 
 [hypatia-config]
 scan-enabled = true
-scan-depth = "standard"  # quick | standard | deep
+scan-depth = "quick"  # quick | standard | deep — quick is appropriate: one HTML file, no source tree
 report-format = "logtalk"
 
 [symbolic-rules]
-# Custom symbolic rules for this project
-# - { name = "no-unsafe-ffi", pattern = "believe_me|unsafeCoerce", severity = "critical" }
+rules = [
+  { name = "no-network-primitive", pattern = "fetch\\(|XMLHttpRequest|WebSocket|eval\\(|new Function\\(", severity = "critical", notes = "Mirrors ci.yml's integrity check — the game must make no network calls or dynamic-code execution." },
+]
 
 [neural-config]
-# Neural pattern detection settings
-# confidence-threshold = 0.85
-# model = "hypatia-v2"
+# No neural pattern detection configured — the file is too small and too
+# uniform in style for confidence-threshold tuning to add value.

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MPL-2.0
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 #
 # AGENTIC.a2ml — AI agent constraints and capabilities
@@ -17,11 +17,15 @@ can-create-files = true
 
 [agent-constraints]
 # What AI agents must NOT do:
-# - Never use banned language patterns (believe_me, unsafeCoerce, etc.)
 # - Never commit secrets or credentials
-# - Never use banned languages (TypeScript, Python, Go, etc.)
+# - Never add a network call, eval, or dynamic-code-execution primitive to
+#   688-attack-hub.html — see AUDIT.adoc and 0-AI-MANIFEST.a2ml; ci.yml
+#   enforces this on every push
+# - Never introduce a build step, bundler, or dependency for the game itself
+#   — it is a deliberately dependency-free single file
 # - Never place state files in repository root (must be in .machine_readable/)
-# - Never use AGPL license (use MPL-2.0)
+# - Licence is AGPL-3.0-or-later for this repo (metadatastician org
+#   convention) — do not swap in MPL-2.0
 
 [maintenance-integrity]
 fail-closed = true
@@ -30,22 +34,12 @@ allow-silent-skip = false
 require-rerun-after-fix = true
 release-claim-requires-hard-pass = true
 
-# ============================================================================
-# METHODOLOGY (ADR-002)
-# ============================================================================
-# Detailed methodology configuration lives in:
-#   .machine_readable/bot_directives/methodology.a2ml
-#   .machine_readable/bot_directives/coverage.a2ml
-#   .machine_readable/bot_directives/debt.a2ml
-#
-# AGENTIC.a2ml declares WHAT agents can do (permissions, gating).
-# bot_directives/ declares HOW agents should work (methodology).
-
-[methodology]
-instructions-dir = ".machine_readable/bot_directives/"
-default-mode = "hybrid"
+# This repo carries no bot_directives/ — that's a maximal-template module
+# this minimal repo doesn't declare (see rsr-profile.a2ml). Methodology is
+# just: read 0-AI-MANIFEST.a2ml, then STATE.a2ml, then AUDIT.adoc before
+# making any claim about what is or isn't verified here.
 
 [automation-hooks]
-# on-enter: Read 0-AI-MANIFEST.a2ml, then STATE.a2ml, then bot_directives/
-# on-exit: Update STATE.a2ml, coverage.a2ml, and debt.a2ml with session outcomes
-# on-commit: Run just validate-rsr
+# on-enter: read 0-AI-MANIFEST.a2ml, then STATE.a2ml
+# on-exit: update STATE.a2ml with session outcomes
+# on-commit: ci.yml's `integrity` job is the real gate — see .github/workflows/ci.yml

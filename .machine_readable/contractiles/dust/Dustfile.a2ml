@@ -1,62 +1,41 @@
-# SPDX-License-Identifier: MPL-2.0
-# Dustfile — Cleanup and hygiene contract for rsr-template-repo
-# Author: Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Dustfile — Cleanup and hygiene contract for 688 Attack Hub
+# Author: Jonathan D.A. Jewell (hyperpolymath)
 #
-# Paired runner: dust.ncl
-# Verb:          dust
-# Semantics:     What should be cleaned up. Housekeeping, not blockers.
-#
-# This repository: rsr-template-repo is the canonical template.
-# Cleanup items here ensure the template itself remains pristine.
+# What should be cleaned up. Housekeeping, not blockers.
 
 @abstract:
-Cleanup and hygiene items for rsr-template-repo. These are maintenance tasks
-that ensure the template repository remains clean and ready for distribution
-to new repositories.
+Cleanup and hygiene items for 688 Attack Hub. Mostly guards against
+re-accumulating the maximal-template scaffolding this repo deliberately
+pruned when it was created from hyperpolymath/rsr-template-repo.
 @end
 
-## Stale Files
+## Pruned-Scaffolding Reaccumulation
 
-### no-template-artifacts
-- description: No generated files from template testing in root
-- run: test -z "$(ls template-test-* 2>/dev/null)"
-- severity: info
-- notes: Template testing should use /tmp or dedicated test directories
-
-### no-example-placeholders
-- description: No example placeholder files (EXAMPLE-, SAMPLE-) in contractiles/
-- run: test -z "$(find .machine_readable/contractiles/ -name 'EXAMPLE-*' -o -name 'SAMPLE-*' 2>/dev/null)"
+### no-pruned-directories-return
+- description: Idris2/Zig ABI scaffolding, benches/, container/, docs-template/, features/, verification/, session/, tools/ should not silently return
+- run: "! find . -maxdepth 1 -type d \\( -name benches -o -name container -o -name docs-template -o -name features -o -name verification -o -name session -o -name tools -o -name archetypes \\) 2>/dev/null | head -1 | grep -q ."
 - severity: warning
-- notes: All placeholders should be replaced with actual content or removed
+- notes: These were deliberately removed as not applicable to a single-file browser game — see rsr-profile.a2ml [deliberate-deviations]
+
+### no-orphaned-contractile-runners
+- description: No .ncl / .k9.ncl / .manifest.a2ml runner files reappear under contractiles/ (deliberately not shipped — see INDEX.a2ml runner note)
+- run: "! find .machine_readable/contractiles/ -name '*.ncl' -o -name '*.k9.ncl' -o -name '*.manifest.a2ml' 2>/dev/null | head -1 | grep -q ."
+- severity: warning
+
+### no-notification-storm-workflows
+- description: mirror.yml, instant-sync.yml, push-email-notify.yml should not be added — these were frozen org-wide after generating ~4,300 notifications
+- run: "! find .github/workflows/ -name 'mirror.yml' -o -name 'instant-sync.yml' -o -name 'push-email-notify.yml' 2>/dev/null | head -1 | grep -q ."
+- severity: warning
+
+## Format Hygiene
 
 ### no-old-contractile-formats
 - description: No old .contractile or .hs files remaining
-- run: test -z "$(find .machine_readable/contractiles/ \( -name '*.contractile' -o -name '*.hs' \) 2>/dev/null)"
+- run: test -z "$(find .machine_readable/contractiles/ \\( -name '*.contractile' -o -name '*.hs' \\) 2>/dev/null)"
 - severity: warning
-- notes: All contractiles should be .a2ml format
 
-## Format Duplicates
-
-### no-duplicate-justfile
-- description: Only one Justfile (hardlinked from root to .machine_readable/contractiles/)
-- run: test $(stat -c '%i' Justfile) = $(stat -c '%i' .machine_readable/contractiles/Justfile 2>/dev/null)
+### no-stale-mpl-headers
+- description: No file still carries an MPL-2.0 SPDX header inherited from the maximal template — this repo is AGPL-3.0-or-later throughout
+- run: "! grep -rl 'SPDX-License-Identifier: MPL-2.0' --include='*.a2ml' --include='*.yml' . 2>/dev/null | head -1 | grep -q ."
 - severity: warning
-- notes: Justfile should be hardlinked, not copied
-
-### no-duplicate-readme-format
-- description: Only one README format in contractiles/ (.adoc canonical)
-- run: test ! -f .machine_readable/contractiles/README.md
-- severity: info
-
-## Template Hygiene
-
-### no-stale-template-references
-- description: No references to rsr-template-repo in generic template files
-- run: test -z "$(grep -r 'rsr-template-repo' machine-readable-design/ 2>/dev/null)"
-- severity: warning
-- notes: Generic templates should use {{PROJECT_NAME}} or similar placeholders
-
-### version-sync-checked
-- description: Version in canonical-directory-structure matches .machine_readable/contractiles
-- verification: compare version identifiers in both locations
-- severity: info

@@ -1,45 +1,30 @@
-# SPDX-License-Identifier: MPL-2.0
-# ECOSYSTEM.a2ml — Ecosystem position (META-TEMPLATE)
-#
-# This is the ECOSYSTEM file for rsr-template-repo itself. It records the
-# TEMPLATE's own position in the estate. When consumed by a new project,
-# replace these fields with the target project's ecosystem position and
-# related projects (see the NOTE FOR CONSUMERS at the bottom).
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# ECOSYSTEM.a2ml — 688 Attack Hub's ecosystem position
 
 [metadata]
-project = "rsr-template-repo"
-ecosystem = "hyperpolymath"
+project = "688-attack-hub"
+ecosystem = "metadatastician"
 
 [position]
-type = "repository-template"
-purpose = "Canonical RSR-compliant repository template: scaffolding (CI/CD, AI manifests, ABI/FFI standards, container ecosystem, governance) that new hyperpolymath projects are instantiated from."
-# IS-NOT — anti-identity (the boundary-erosion guard; each line is a real past confusion)
+type = "browser game"
+purpose = "A single-player idle/strategy toy about spreading a fictional rogue network repeater across real internet exchange points."
+# IS-NOT — anti-identity (the boundary-erosion guard)
 what-this-is-not = [
-  "a project in its own right",
-  "Scaffoldia (the full-featured repo designer)",
-  "standards (the canon source this template operationalises)",
+  "a real network exploitation or reconnaissance tool",
+  "a copy of the 1997 commercial game '688(I) Hunter/Killer' / '688 Attack Sub'",
+  "a project with a formal verification ledger (unlike its sibling f19-stealth-glider)",
 ]
 
 [pipeline]
-position = "foundation"
-chain = "standards → rsr-template-repo → (every estate repo)"
-notes = "rsr-template-repo turns the RSR standard into runnable scaffolding. New repos are created from it via `just init`, which substitutes the {{PLACEHOLDER}} tokens."
-coordination = "standards"
+position = "leaf"
+chain = "hyperpolymath/rsr-template-repo → (this repo, pruned to its applicable module set)"
+notes = "Scaffolded from the GitHub template via `gh repo create --template`, then pruned to the minimal file set an idle-toy browser game actually needs — following the precedent set by this org's f19-stealth-glider."
+coordination = "none — standalone game repository"
 
 [related-projects]
 projects = [
-  { name = "standards", relationship = "standard-source", notes = "Defines the RSR standard, contractile canon, and policies that this template operationalises." },
-  { name = "stapeln", relationship = "build-tooling", notes = "Layer-based container build system; the template ships stapeln.toml scaffolding." },
-  { name = "selur-compose", relationship = "build-tooling", notes = "Service composition; the template ships selur-compose.toml scaffolding." },
-  { name = "k9-svc", relationship = "validation-tooling", notes = "Runs the self-validating k9.ncl checks (.machine_readable/self-validating/)." },
-  { name = "cerro-torre", relationship = "signing-tooling", notes = "Container/image signing provider referenced by the container scaffolding." },
-  { name = "svalinn", relationship = "verification-tooling", notes = "Supply-chain verification referenced by the container scaffolding." },
-  { name = "vordr", relationship = "verification-tooling", notes = "Build/artifact verification referenced by the container scaffolding." },
+  { name = "f19-stealth-glider", relationship = "sibling / structural precedent", notes = "Same org, same shape (single self-contained HTML game + full RSR docs), but with a real formal verification ledger this repo deliberately does not have." },
+  { name = "rsr-template-repo", relationship = "scaffold source", notes = "The maximal template this repo was created from and then pruned." },
+  { name = "ddraig-ssg", relationship = "considered and rejected for this repo", notes = "A Markdown-to-site generator; doesn't apply here because there is no Markdown content to render, only one pre-built interactive HTML page." },
+  { name = "casket-ssg", relationship = "considered and rejected for this repo", notes = "Same reasoning as ddraig-ssg — the template's default pages.yml uses it, but this repo's pages.yml bypasses it entirely, matching f19-stealth-glider." },
 ]
-
-# ---------------------------------------------------------------------------
-# NOTE FOR CONSUMERS: When using this template to create a new repo, replace
-# the project/purpose above and rewrite [related-projects] to describe YOUR
-# project's actual ecosystem. The entries above describe the TEMPLATE's own
-# position, not yours.
-# ---------------------------------------------------------------------------

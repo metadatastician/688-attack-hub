@@ -1,3 +1,17 @@
 // SPDX-License-Identifier: CC-BY-SA-4.0
 // Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 = .machine_readable Pillar
+
+Agent-facing metadata for 688 Attack Hub.
+
+== Contents
+
+* `rsr-profile.a2ml` — this repo's declared RSR v2.0 capability profile
+  (deliberately minimal — see the file itself).
+* `descriptiles/` — the six core A2ML files: STATE, META, ECOSYSTEM, AGENTIC,
+  NEUROSYM, PLAYBOOK.
+* `contractiles/` — Must/Trust/Bust/Intend/Adjust/Dust probes. Every `- run:`
+  line is a plain shell one-liner, executable from the repository root.
+
+See `0-AI-MANIFEST.a2ml` at the repository root for the entry point an agent
+should read first.

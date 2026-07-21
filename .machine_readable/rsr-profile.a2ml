@@ -1,53 +1,61 @@
-# SPDX-License-Identifier: MPL-2.0
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 #
 # rsr-profile.a2ml — this repo's declared RSR v2.0 capabilities.
 #
-# Authored in the A2ML record dialect (hyperpolymath/standards
-# a2ml/RECORD-DIALECT-SPEC.adoc). It declares which capabilities this repo has,
-# per TEMPLATE-APPLICABILITY-POLICY.adoc; the RSR v2.0 conformance oracle
-# (hypatia Hypatia.Rules.RsrConformance) uses `capabilities` to compute the
-# APPLICABLE criteria set — a gated criterion is scored only when its gating
-# capability appears below; everything else is `na` and excluded from the
-# denominator.
+# Declares which capabilities this repository actually HAS, per
+# TEMPLATE-APPLICABILITY-POLICY.adoc. The RSR v2.0 conformance oracle uses
+# `capabilities` to compute the APPLICABLE criteria set: a gated criterion is
+# scored only when its gating capability appears below; everything else is `na`
+# and excluded from the denominator.
 #
-# rsr-template-repo is deliberately MAXIMAL: it ships scaffolding for FFI/ABI
-# seams, in-tree formal proofs, a container, a reproducible build, benchmarks,
-# a docs site, and the full governance trio — so a repo scaffolded FROM it can
-# adopt any of them. Its declared set is therefore near-total, which is exactly
-# what makes it the dogfood target (the gate requires Gold on the applicable
-# set). Every capability below is grounded in a file/dir that actually exists
-# in this tree; capabilities it does NOT have (rust, affinescript, mobile,
-# web-ui, api-service, published-package) are omitted so the oracle does not
-# score this repo against modules it does not carry.
+# 688 Attack Hub is deliberately MINIMAL — the near-opposite of the maximal
+# template it is measured against, and simpler even than its sibling
+# `f19-stealth-glider`. It is one self-contained browser toy in dependency-
+# free JavaScript with no formal design claims of any kind. Declaring
+# `formal-proofs`, `ffi`, `abi`, or a build/container capability would score
+# this repo against modules it does not carry — exactly the over-scaffolding
+# failure RSR v2.0 exists to fix.
+#
+# Every capability below is grounded in a file or directory that really exists.
 
 [rsr-profile]
 version = "1.0.0"
 spec = "rsr-criteria-v2"
 declares-against = "2.0.0-draft"
-# Effective capability set (direct declaration; no preset shorthand used).
 capabilities = [
-  "zig",                # src/interface/ffi/build.zig + Zig FFI layer
-  "idris2",             # abi.ipkg + src/interface/Abi/ (dependent-typed ABI)
-  "bash",               # scripts/*.sh automation
-  "cli",                # src/ command-line entry scaffolding
-  "library",            # consumed/published as a library surface
-  "ffi",                # C-ABI FFI seam (Zig), src/interface/ffi/
-  "abi",                # formally specified ABI: abi.ipkg + src/interface/Abi/ proofs
-  "formal-proofs",      # verification/proofs/ (in-tree mechanised proofs)
-  "docs-site",          # .github/workflows/pages.yml (casket/Pages)
-  "container",          # container/ + .devcontainer/Containerfile
-  "reproducible-build", # build/guix.scm
-  "benchmarks",         # benches/
-  "governance-tier",    # full AUDIT/AFFIRMATION/GOVERNANCE/MAINTAINERS trio
+  "web-ui",             # 688-attack-hub.html — canvas/SVG render + input; played in a browser
+  "docs-site",          # .github/workflows/pages.yml publishes the playable bundle
+  "governance-tier",    # full AUDIT / AFFIRMATION / GOVERNANCE / MAINTAINERS set
 ]
 
 [notes]
 # Capabilities intentionally NOT declared (no corresponding code in tree):
-#   rust           — no *.rs / Cargo.toml (the FFI/ABI layer is Zig + Idris2)
-#   affinescript   — no *.affine
-#   mobile         — no Tauri/Dioxus app
-#   web-ui         — no browser UI
-#   api-service    — not a network daemon
-#   published-package — a scaffold template, not itself a registry artifact
-omitted-rationale = "Declaring a capability this repo lacks would make the oracle score it against a module it does not carry — the over-scaffolding failure v2.0 fixes. See TEMPLATE-APPLICABILITY-POLICY.adoc."
+#   rust, zig, idris2, affinescript — the project is plain inline JavaScript
+#   ffi, abi              — no foreign function or ABI seam of any kind
+#   formal-proofs         — this repo makes NO formal design claims, unlike
+#                           f19-stealth-glider (which has a real geometric
+#                           verification ledger). There is nothing here to
+#                           mechanise, and no claim that there is.
+#   container             — no container/ or .devcontainer/
+#   reproducible-build    — no build system at all; the committed HTML file
+#                           IS the artefact, there is nothing to rebuild from
+#   benchmarks              — no benches/
+#   cli                     — no command-line surface
+#   library                 — no public API; nothing consumes this as a dependency
+#   api-service             — not a network daemon; the game makes no network calls
+#   published-package       — not published to any registry
+#   bash                    — no scripts/*.sh
+omitted-rationale = "Declaring a capability this repo lacks would make the oracle score it against a module it does not carry. Under-declaring is honest; over-declaring manufactures both false gaps and false credit."
+
+[deliberate-deviations]
+# Where this repo knowingly diverges from the maximal template. Rationale in AUDIT.adoc.
+deviations = [
+  { item = "No mirror.yml / instant-sync.yml / push-email-notify.yml", reason = "These are the notification-storm workflows frozen org-wide after they generated ~4,300 notifications. Re-committing them would re-arm the amplifier the estate just disabled." },
+  { item = "No advanced codeql.yml", reason = "GitHub code-scanning DEFAULT SETUP is enabled for repos in this estate. An advanced workflow conflicts with default setup and fails permanently. Scanning is present; the workflow file is not." },
+  { item = "No .ncl / .k9.ncl contractile runners", reason = "The Nickel contractile runners are not built anywhere in the estate. Shipping them would be non-executable scaffolding. Every `- run:` probe in .machine_readable/contractiles/ is a plain shell one-liner instead." },
+  { item = "No VERIFICATION.md", reason = "Unlike f19-stealth-glider, this repo has no formal design claims to verify. Shipping an empty or padded verification ledger would be worse than shipping none." },
+  { item = "No justfile", reason = "Unlike f19-stealth-glider (which has real build/verify/contracts recipes), this repo has nothing to run beyond opening 688-attack-hub.html in a browser or `npm run serve`. A justfile with no real recipes would be exactly the non-executable-scaffolding anti-pattern contractiles exist to catch." },
+  { item = "No mise.toml", reason = "There is no toolchain to pin — no runtime, no build tool, no linter config. The game needs only a browser." },
+  { item = "README.md rather than README.adoc", reason = "Tolerated by the estate quality gate; the file is complete and renders natively on GitHub." },
+]

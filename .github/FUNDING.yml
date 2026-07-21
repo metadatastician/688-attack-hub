@@ -1,7 +1,19 @@
-# SPDX-License-Identifier: MPL-2.0
-# Funding platforms for {{OWNER}} projects
-# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
+# Funding platforms for 688 Attack Hub.
+#
+# No funding is solicited for this project. Every key below is intentionally
+# blank rather than deleted, so that the supported set stays visible if that
+# ever changes.
 
-github: {{OWNER}}
-ko_fi: {{OWNER}}
-liberapay: {{OWNER}}
+github: # up to 4 GitHub Sponsors-enabled usernames, e.g. [user1, user2]
+patreon: # a single Patreon username
+open_collective: # a single Open Collective username
+ko_fi: # a single Ko-fi username
+tidelift: # a single Tidelift platform-name/package-name, e.g. npm/babel
+community_bridge: # a single Community Bridge project-name
+liberapay: # a single Liberapay username
+issuehunt: # a single IssueHunt username
+lfx_crowdfunding: # a single LFX Crowdfunding project-name
+polar: # a single Polar username
+buy_me_a_coffee: # a single Buy Me a Coffee username
+thanks_dev: # a single thanks.dev username
+custom: # up to 4 custom sponsorship URLs

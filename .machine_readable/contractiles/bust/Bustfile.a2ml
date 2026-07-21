@@ -1,52 +1,50 @@
-# SPDX-License-Identifier: MPL-2.0
-# Bustfile — failure mode contractile for rsr-template-repo
-# Author: Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Bustfile — failure mode contractile for 688 Attack Hub
+# Author: Jonathan D.A. Jewell (hyperpolymath)
 #
-# Paired runner: bust.ncl
-# Verb:          bust
-# Semantics:     Every declared failure mode must have a working recovery path
-#                that has been exercised. Status moves:
-#                  declared → drilled (probe run) → verified (recovery confirmed)
-#                  or → failing (recovery broken)
+# Every declared failure mode should have a recovery path. Status moves:
+#   declared → drilled (probe run) → verified (recovery confirmed)
+#   or → failing (recovery broken)
 #
-# CLI:
-#   contractile bust check  → list failure modes + recovery status
-#   contractile bust drill  → inject failures, verify recovery paths
-#
-# This repository: rsr-template-repo is the canonical template for RSR compliance.
-# Failure modes here relate to template distribution and substitution.
+# This repo has had no real incidents yet — unlike f19-stealth-glider's
+# Bustfile (which records genuine occurrences), everything below is
+# `declared`, not `verified`. Update status to `verified` only after the
+# failure genuinely happens and the recovery is genuinely exercised.
 
 @abstract:
-Bustfile for rsr-template-repo. Lists failure modes specific to the template
-repository itself, particularly around template distribution, substitution,
-and synchronization across the hyperpolymath estate.
+Failure modes specific to 688 Attack Hub: a single-file browser game with a
+GitHub Pages deployment and no build step. Most realistic failure modes are
+CI/publication issues, not gameplay bugs.
 @end
 
 ## Failure Modes
 
-### template-substitution-failure
-- class: template_processing
-- description: Template substitution fails when initializing a new repo from this template
-- injection_probe: "cp -r rsr-template-repo test-repo && cd test-repo && sed -i 's/rsr-template-repo/TEST/g' .machine_readable/contractiles/Intentfile.a2ml && grep -q 'TEST' .machine_readable/contractiles/Intentfile.a2ml"
-- recovery_probe: "git -C test-repo diff --quiet .machine_readable/contractiles/Intentfile.a2ml"
-- expected_recovery_time_seconds: 10
+### pages-artifact-startup-failure
+- class: ci_cd
+- description: pages.yml fails at startup because an action calls an unpinned transitive action (the actions/upload-pages-artifact problem f19-stealth-glider already hit)
+- recovery: pages.yml already hand-packs the artifact instead of using actions/upload-pages-artifact — see the comment block at the top of that file
+- expected_recovery_time_seconds: 300
 - status: declared
-- notes: Verify that substitution scripts handle all placeholder replacements correctly
+- notes: If this recurs, check every `uses:` for a transitive unpinned action, not just the top-level ones
 
-### sync-drift-between-repos
-- class: synchronization
-- description: Drift occurs between rsr-template-repo and other repos after template updates
-- injection_probe: "echo 'template_updated' > /tmp/test_drift_marker"
-- recovery_probe: "test -f /tmp/test_drift_marker && rm /tmp/test_drift_marker"
+### published-bundle-diverges-from-committed-file
+- class: supply_chain
+- description: The file served from GitHub Pages differs from the file in the repository
+- recovery: re-run pages.yml; verify with `diff <(curl -s https://metadatastician.github.io/688-attack-hub/) 688-attack-hub.html`
+- expected_recovery_time_seconds: 120
+- status: declared
+
+### network-primitive-reintroduced
+- class: design_invariant
+- description: A future change adds a fetch/eval/exec primitive to the game, falsifying AUDIT.adoc's central claim
+- recovery: ci.yml's integrity job fails the build automatically; revert the change
 - expected_recovery_time_seconds: 60
 - status: declared
-- notes: The estate-wide sync scripts (see scripts/) should prevent this; verify with scripts/verify-sync.sh
+- notes: This is the one failure mode this repo actually has automated detection for
 
-### contractile-parse-error
-- class: contractile_format
-- description: A contractile file fails to parse due to syntax errors
-- injection_probe: "echo 'invalid syntax' >> rsr-template-repo/.machine_readable/contractiles/Intentfile.a2ml"
-- recovery_probe: "git checkout rsr-template-repo/.machine_readable/contractiles/Intentfile.a2ml"
-- expected_recovery_time_seconds: 5
+### clade-identity-copied-from-template
+- class: metadata
+- description: CLADE.a2ml's UUID/canonical-name accidentally reverts to rsr-template-repo's own identity (a proven estate-wide bug — see that file's own CLADE.a2ml)
+- recovery: recompute with `uuidgen --sha1 --namespace @url --name "github.com/metadatastician/688-attack-hub"` and confirm it matches the value already in the file
+- expected_recovery_time_seconds: 60
 - status: declared
-- notes: All .a2ml files should be valid A2ML; use a2ml-validate runner

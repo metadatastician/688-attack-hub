@@ -116,10 +116,13 @@ In case of disagreements:
 
 This repository adheres to hyperpolymath estate-wide policies:
 
-* **License**: MPL-2.0 for code, CC-BY-SA-4.0 for prose (per standards/LICENCE-POLICY.adoc)
+* **License**: AGPL-3.0-or-later for code and prose — this repo sits in the
+  `metadatastician` org convention for co-developed work (per
+  standards/LICENCE-POLICY.adoc Rule 3), not the general MPL-2.0/CC-BY-SA-4.0
+  fallback
 * **Code of Conduct**: Follows hyperpolymath CODE_OF_CONDUCT.md
 * **Security**: Follows hyperpolymath SECURITY.md
-* **Contributing**: Follows hyperpolymath CONTRIBUTING.adoc conventions
+* **Contributing**: Follows hyperpolymath CONTRIBUTING.md conventions
 
 == Repository-Specific Conventions
 
@@ -131,9 +134,11 @@ This repository adheres to hyperpolymath estate-wide policies:
 
 | **SPDX Headers** | All source files must have SPDX license identifiers
 
-| **Contractiles** | Mustfile, Trustfile, Intendfile, Adjustfile in root
+| **Contractiles** | Must/Trust/Bust/Intend/Adjust/Dust files under `.machine_readable/contractiles/`
 
-| **Machine Readable** | META.a2ml in .machine_readable/descriptiles/
+| **Machine Readable** | META.a2ml and siblings in `.machine_readable/descriptiles/`
+
+| **No formal verification claims** | Unlike this org's `f19-stealth-glider`, this repo makes no provable design claims — see `AUDIT.adoc`
 
 | **CI/CD** | GitHub Actions workflows in .github/workflows/
 
@@ -152,8 +157,9 @@ Changes to this document require the same process as Significant Changes above.
 == See Also
 
 * link:MAINTAINERS.adoc[Maintainers]
-* link:.github/CODE_OF_CONDUCT.md[Code of Conduct]
-* link:.github/CONTRIBUTING.md[Contributing Guide]
+* link:CODE_OF_CONDUCT.md[Code of Conduct]
+* link:CONTRIBUTING.md[Contributing Guide]
+* link:AUDIT.adoc[Audit — what is and isn't verified about this repo]
 * link:https://github.com/hyperpolymath/standards/blob/main/LICENCE-POLICY.adoc[Estate License Policy]
 * link:https://github.com/hyperpolymath/standards[rhodium-standard-repositories (TPCF)]
 
@@ -163,5 +169,5 @@ Changes to this document require the same process as Significant Changes above.
 |===
 | Date | Change | By
 
-| 2026-06-07 | Initial governance model established | @hyperpolymath
+| 2026-07-21 | Initial governance model established | @hyperpolymath
 |===

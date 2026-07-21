@@ -2,46 +2,31 @@
 SPDX-License-Identifier: CC-BY-SA-4.0
 Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 -->
-## Summary
+## What this changes
 
-<!-- Briefly describe what this PR does and why. Link to related issues with "Closes #N". -->
+<!-- One or two sentences. What is different after this PR? -->
 
-## Changes
+## Why
 
-<!-- List the key changes introduced by this PR. -->
+<!-- Link the issue if there is one. If this changes gameplay or balance, say
+     what problem it solves. -->
 
--
+## Checklist
 
-## RSR Quality Checklist
+- [ ] I opened `688-attack-hub.html` in a browser and played through the change.
+- [ ] If I touched `688-attack-hub.html`, it still contains no `fetch`,
+      `XMLHttpRequest`, `WebSocket`, `eval(`, or `new Function(` — the
+      invariant `ci.yml`'s `integrity` job checks on every push.
+- [ ] I added no dependency and no build step (`package.json` has no
+      `dependencies`).
+- [ ] Every new or changed `.a2ml` file has
+      `# SPDX-License-Identifier: AGPL-3.0-or-later` as its first line.
+- [ ] No unsubstituted doubled-brace template placeholders remain.
+- [ ] Any new GitHub Action `uses:` is pinned to a full commit SHA, with a
+      trailing version comment.
 
-<!-- Check all that apply. PRs that fail required checks will not be merged. -->
-
-### Required
-
-- [ ] Tests pass (`just test` or equivalent)
-- [ ] Code is formatted (`just fmt` or equivalent)
-- [ ] Linter is clean (no new warnings or errors)
-- [ ] No banned language patterns (no TypeScript, no npm/bun, no Go/Python)
-- [ ] No `unsafe` blocks without `// SAFETY:` comments
-- [ ] No banned functions (`believe_me`, `unsafeCoerce`, `Obj.magic`, `Admitted`, `sorry`)
-- [ ] SPDX license headers present on all new/modified source files
-- [ ] No secrets, credentials, or `.env` files included
-
-### As Applicable
+## As applicable
 
 - [ ] `.machine_readable/descriptiles/STATE.a2ml` updated (if project state changed)
-- [ ] `.machine_readable/descriptiles/ECOSYSTEM.a2ml` updated (if integrations changed)
-- [ ] `.machine_readable/descriptiles/META.a2ml` updated (if architectural decisions changed)
-- [ ] Documentation updated for user-facing changes
-- [ ] `TOPOLOGY.md` updated (if architecture changed)
-- [ ] `CHANGELOG` or release notes updated
-- [ ] New dependencies reviewed for license compatibility (MPL-2.0 / MPL-2.0)
-- [ ] ABI/FFI changes validated (`src/interface/abi/` and `src/interface/ffi/` consistent)
-
-## Testing
-
-<!-- Describe how you tested these changes. -->
-
-## Screenshots
-
-<!-- If applicable, add screenshots or terminal output demonstrating the change. -->
+- [ ] `AUDIT.adoc` / `AFFIRMATION.adoc` updated (if what's verified about this repo changed)
+- [ ] `CHANGELOG.md` updated

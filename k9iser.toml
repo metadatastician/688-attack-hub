@@ -1,0 +1,42 @@
+# k9iser manifest — wrap 688 Attack Hub's one config into a self-validating K9 contract
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# 688 Attack Hub: a browser idle/strategy toy. Safety-tier "kennel" — low risk:
+# a self-contained browser game with no runtime service, no user data, no
+# network access, and no dependencies. Nothing here mutates live systems.
+#
+# This repository has exactly one machine-parsable config — package.json —
+# because the project is deliberately dependency-free and has no build, lint,
+# bundler, or toolchain-pin configuration to wrap. Unlike its sibling
+# f19-stealth-glider, there is no mise.toml (nothing to pin) and no justfile
+# (nothing to run beyond opening the file in a browser) — see rsr-profile.a2ml
+# [deliberate-deviations].
+#
+# The invariant that actually matters here is not a config value: it is the
+# no-network-calls check in ci.yml's `integrity` job. This file complements
+# that; it does not stand in for it.
+
+[project]
+name = "688 Attack Hub"
+safety-tier = "kennel"           # kennel (low) | yard (medium) | hunt (high)
+
+# ── package.json — project identity, licence, and the zero-dependency invariant ──
+
+[[configs]]
+name = "package-metadata"
+source = "package.json"
+format = "json"
+must = [
+  "license == \"AGPL-3.0-or-later\"",   # metadatastician org convention; do not relicense
+  "type == \"module\"",
+  "private == false",                   # the repo is public
+]
+trust = ["signed-by: ci-pipeline"]
+dust = ["remove: dependencies", "remove: devDependencies"]
+intend = ["zero-dependency", "open-source"]
+notes = "Zero dependencies is a design property, not an accident — see AUDIT.adoc. Any dependency key appearing in package.json would be a regression from the repo's stated invariants."
+
+[validation]
+strict = true
+auto-fix = false
+report-format = "text"

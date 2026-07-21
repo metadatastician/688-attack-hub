@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>688 ATTACK HUB — AS688</title>
+<style>
+:root{
+  --case:#cfc6b0; --case-hi:#ded6c2; --case-dark:#a89e88; --case-deep:#6f6857;
+  --silk:#3d3a31; --silk-soft:#6b6555;
+  --win:#12161a; --win-line:#1e262c; --win-dim:#5b6f79; --win-txt:#a9c2ce;
+  --led-on:#5ef08a; --led-flood:#ffab2e; --led-off:#2b3a41; --led-bad:#e0424f;
+  --cond:"Arial Narrow","Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:#151310;color:var(--silk);
+  font-family:var(--cond);
+  display:flex;align-items:center;justify-content:center;padding:14px;
+}
+/* ── the physical unit ───────────────────────────────────── */
+.unit{
+  width:100%;max-width:1220px;height:min(94vh,860px);
+  background:linear-gradient(176deg,var(--case-hi),var(--case) 22%,var(--case) 78%,var(--case-dark));
+  border-radius:7px;
+  box-shadow:0 1px 0 #efe8d8 inset,0 -3px 0 #8d846f inset,0 22px 50px -12px #000;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+/* ── faceplate ───────────────────────────────────────────── */
+.face{padding:11px 16px 9px;border-bottom:1px solid var(--case-dark);flex:none}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand h1{
+  margin:0;font-size:23px;font-weight:700;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--silk);
+}
+.brand .asn{
+  font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--silk-soft);
+  border:1px solid var(--case-dark);padding:2px 6px;border-radius:2px;
+}
+.brand .tag{
+  margin-left:auto;font-size:10.5px;letter-spacing:.19em;text-transform:uppercase;
+  color:var(--silk-soft);
+}
+/* LED strip — the signature */
+.ledbar{
+  margin-top:10px;background:#15181b;
+  border-radius:3px;padding:7px 10px;
+  box-shadow:0 2px 3px #6f6857 inset,0 -1px 0 #e6dfcd;
+  display:flex;align-items:center;gap:10px;
+}
+.ports{display:flex;gap:5px;flex:1;flex-wrap:wrap}
+.port{width:9px;height:9px;border-radius:50%;background:var(--led-off);
+  box-shadow:0 0 0 1px #000 inset;transition:background .18s,box-shadow .18s}
+.port.on{background:var(--led-on);box-shadow:0 0 6px var(--led-on),0 0 0 1px #0a3a22 inset}
+.port.flood{background:var(--led-flood);box-shadow:0 0 6px var(--led-flood);animation:bl .45s steps(2,end) infinite}
+.port.bad{background:var(--led-bad);box-shadow:0 0 6px var(--led-bad)}
+@keyframes bl{50%{opacity:.28}}
+.lamp{display:flex;align-items:center;gap:5px}
+.lamp b{width:11px;height:11px;border-radius:50%;background:var(--led-off);box-shadow:0 0 0 1px #000 inset}
+.lamp.lit b{background:var(--led-flood);box-shadow:0 0 9px var(--led-flood)}
+.lamp.pwr b{background:var(--led-on);box-shadow:0 0 7px var(--led-on)}
+.lamp span{font-size:8.5px;letter-spacing:.15em;color:#8e9aa0}
+/* ── body ────────────────────────────────────────────────── */
+.body{flex:1;display:flex;min-height:0;padding:12px 16px;gap:13px}
+/* recessed display */
+.screen{
+  flex:1;min-width:0;background:var(--win);border-radius:4px;position:relative;overflow:hidden;
+  box-shadow:0 0 0 2px #57503f,0 3px 7px rgba(0,0,0,.5) inset;
+}
+.screen svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hud{
+  position:absolute;left:11px;top:10px;font-family:var(--mono);font-size:10.5px;
+  color:var(--win-dim);letter-spacing:.05em;line-height:1.75;pointer-events:none;
+}
+.hud b{color:var(--win-txt);font-weight:600}
+.tip{
+  position:absolute;pointer-events:none;background:#0a0e11;border:1px solid #2b3942;
+  padding:6px 9px;font-family:var(--mono);font-size:10.5px;color:var(--win-txt);
+  border-radius:3px;opacity:0;transition:opacity .12s;max-width:220px;line-height:1.55;
+}
+.tip.show{opacity:1}
+.tip em{color:#7f939d;font-style:normal}
+/* right column */
+.side{width:326px;flex:none;display:flex;flex-direction:column;gap:9px;min-height:0}
+.gauges{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.g{background:#15181b;border-radius:3px;padding:7px 9px;
+  box-shadow:0 2px 3px #6f6857 inset}
+.g u{display:block;font-size:8.5px;letter-spacing:.16em;color:#7d8a91;text-decoration:none}
+.g strong{display:block;font-family:var(--mono);font-size:16px;color:#cfe2eb;font-weight:600;margin-top:2px}
+.g.wide{grid-column:1/-1}
+.meter{height:5px;background:#242c31;border-radius:3px;margin-top:6px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--led-flood);transition:width .3s,background .3s}
+.tabs{display:flex;gap:5px}
+.tabs button{
+  flex:1;font-family:var(--cond);font-size:10px;letter-spacing:.15em;text-transform:uppercase;
+  padding:6px 4px;border:1px solid var(--case-dark);background:var(--case-hi);color:var(--silk-soft);
+  border-radius:2px;cursor:pointer;
+}
+.tabs button[aria-selected=true]{background:var(--case-deep);color:var(--case-hi);border-color:var(--case-deep)}
+.pane{flex:1;background:#15181b;border-radius:3px;overflow-y:auto;min-height:0;
+  box-shadow:0 2px 3px #6f6857 inset;padding:8px}
+.pane::-webkit-scrollbar{width:8px}
+.pane::-webkit-scrollbar-thumb{background:#2c363c;border-radius:4px}
+/* upgrades */
+.track{font-size:9.5px;letter-spacing:.17em;color:#6d7d85;margin:9px 0 5px;text-transform:uppercase}
+.track:first-child{margin-top:2px}
+.up{
+  width:100%;text-align:left;display:block;background:#1c2226;border:1px solid #29343a;
+  border-radius:3px;padding:6px 8px;margin-bottom:5px;cursor:pointer;color:#b6cbd4;
+  font-family:var(--cond);
+}
+.up:hover:not(:disabled){border-color:#3f5560;background:#212a2f}
+.up:disabled{cursor:default;opacity:.42}
+.up.owned{border-color:#2c6244;background:#16261e;opacity:1}
+.up-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.up-n{font-size:12.5px;letter-spacing:.03em}
+.up-c{font-family:var(--mono);font-size:10px;color:#e0b45f;flex:none}
+.up.owned .up-c{color:var(--led-on)}
+.up-d{font-size:11px;color:#7d919b;line-height:1.42;margin-top:2px}
+/* log */
+.log{font-family:var(--mono);font-size:10.5px;line-height:1.62;color:#7f939d}
+.log div{margin-bottom:3px;word-break:break-word}
+.log .w{color:#e0b45f}.log .d{color:#e0707c}.log .g2{color:#63c98d}.log .o{color:#96a7de}
+/* footer controls */
+.foot{
+  flex:none;padding:9px 16px 11px;border-top:1px solid var(--case-dark);
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+}
+.lbl{font-size:9.5px;letter-spacing:.17em;color:var(--silk-soft);text-transform:uppercase}
+.btn{
+  font-family:var(--cond);font-size:11px;letter-spacing:.13em;text-transform:uppercase;
+  padding:7px 13px;border-radius:3px;cursor:pointer;color:var(--silk);
+  background:linear-gradient(180deg,var(--case-hi),var(--case-dark));
+  border:1px solid #8d846f;box-shadow:0 1px 0 #f0e9d9 inset,0 1px 2px rgba(0,0,0,.25);
+}
+.btn:hover:not(:disabled){background:linear-gradient(180deg,#e9e2d1,#b5ab94)}
+.btn:active:not(:disabled),.btn[aria-pressed=true]{
+  background:var(--case-deep);color:var(--case-hi);box-shadow:0 2px 3px rgba(0,0,0,.4) inset}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.whisper{margin-left:auto;border-color:#5d6d78;color:#2c3d47;
+  background:linear-gradient(180deg,#c3ced4,#93a5ae)}
+.btn.whisper:hover:not(:disabled){background:linear-gradient(180deg,#d3dce1,#a2b3bc)}
+.btn.storm{border-color:#8a4a2a;color:#5e2f16;
+  background:linear-gradient(180deg,#e8b98f,#c68f5f)}
+.btn.storm:hover:not(:disabled){background:linear-gradient(180deg,#f2c9a3,#d19a68)}
+/* overlay */
+.ov{position:absolute;inset:0;background:rgba(6,9,11,.93);display:flex;
+  align-items:center;justify-content:center;padding:26px;text-align:center}
+.ov.hide{display:none}
+.ov>div{pointer-events:auto}
+.hint{
+  position:absolute;left:50%;bottom:16px;transform:translateX(-50%);
+  background:rgba(10,14,17,.92);border:1px solid #2b3942;border-radius:3px;
+  padding:8px 15px;font-family:var(--mono);font-size:11.5px;color:#a9c2ce;
+  letter-spacing:.03em;pointer-events:none;white-space:nowrap;
+}
+.hint.hide{display:none}
+.hint b{color:#e0b45f;font-weight:600}
+.ov div{max-width:440px}
+.ov h2{margin:0 0 10px;font-size:20px;letter-spacing:.2em;text-transform:uppercase;color:#cfe2eb}
+.ov p{margin:0 0 16px;font-family:var(--mono);font-size:12px;line-height:1.75;color:#8ba3ae}
+.ov .btn{background:linear-gradient(180deg,#3a474e,#232c31);color:#cfe2eb;border-color:#4a5a63;
+  box-shadow:none}
+@media (max-width:900px){
+  .body{flex-direction:column}.side{width:auto;height:290px}
+  .brand h1{font-size:18px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="unit">
+
+  <div class="face">
+    <div class="brand">
+      <h1>688 Attack Hub</h1>
+      <span class="asn">AS688 · 10BASE-T</span>
+      <span class="tag">Unmanaged repeater · 20 port</span>
+    </div>
+    <div class="ledbar">
+      <div class="ports" id="ports"></div>
+      <div class="lamp" id="colLamp"><b></b><span>COL</span></div>
+      <div class="lamp pwr"><b></b><span>PWR</span></div>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="screen" id="screen">
+      <svg id="map" viewBox="0 0 960 480" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="hud" id="hud"></div>
+      <div class="tip" id="tip"></div>
+      <div class="hint hide" id="hint"><b>Click a city</b> to install. Its exchange is where you wake up.</div>
+      <div class="ov" id="ov"><div>
+        <h2 id="ovT">688 Attack Hub</h2>
+        <p id="ovP">You are one unmanaged repeater in a rack nobody has opened since 1998.<br><br>
+        Everything that enters you leaves by every other port. That is not a flaw.
+        That is the plan.<br><br>Click a city to install.</p>
+        <button class="btn" id="ovB">Begin</button>
+      </div></div>
+    </div>
+
+    <div class="side">
+      <div class="gauges">
+        <div class="g"><u>THROUGHPUT</u><strong id="gGbps">0</strong></div>
+        <div class="g"><u>PORT POINTS</u><strong id="gPP">0</strong></div>
+        <div class="g"><u>SEGMENTS</u><strong id="gSeg">0 / 20</strong></div>
+        <div class="g"><u>REPEATER HOPS</u><strong id="gHop">0 / 4</strong></div>
+        <div class="g wide"><u>NOC ATTENTION</u><strong id="gAtt">0%</strong>
+          <div class="meter"><i id="gAttBar" style="width:0%"></i></div></div>
+      </div>
+      <div class="tabs">
+        <button id="tabU" aria-selected="true">Upgrades</button>
+        <button id="tabL" aria-selected="false">Overheard</button>
+      </div>
+      <div class="pane" id="paneU"></div>
+      <div class="pane" id="paneL" style="display:none"><div class="log" id="log"></div></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span class="lbl">Clock</span>
+    <button class="btn" data-sp="0">Halt</button>
+    <button class="btn" data-sp="1" aria-pressed="true">1×</button>
+    <button class="btn" data-sp="2">2×</button>
+    <button class="btn" data-sp="4">4×</button>
+    <button class="btn whisper" id="whisper" disabled>Whisper</button>
+    <button class="btn storm" id="storm" disabled>Broadcast storm</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ═══ tuning ═══════════════════════════════════════════════ */
+const TICK=500, INCOME=0.34, PP_PER=80, BASE_HOPS=4;
+const LINK_BASE=26, LINK_DIST=0.055, FLOOD_BASE=3.1;
+
+/* ═══ world ════════════════════════════════════════════════ */
+const REGIONS=[
+ {id:"sea",n:"Seattle",     ix:"SIX",           lon:-122.3,lat:47.6, cap:6, lx:-16, ly:-4},
+ {id:"sjc",n:"San Jose",    ix:"Equinix SV",    lon:-121.9,lat:37.3, cap:9, lx:-26, ly:4},
+ {id:"iad",n:"Ashburn",     ix:"Equinix IAD",   lon:-77.5, lat:39.0, cap:10, lx:26, ly:10},
+ {id:"yyz",n:"Toronto",     ix:"TorIX",         lon:-79.4, lat:43.7, cap:5, lx:-4, ly:-7},
+ {id:"gru",n:"São Paulo",   ix:"IX.br",         lon:-46.6, lat:-23.5,cap:8},
+ {id:"lhr",n:"London",      ix:"LINX",          lon:-0.1,  lat:51.5, cap:9, lx:-30, ly:4},
+ {id:"ams",n:"Amsterdam",   ix:"AMS-IX",        lon:4.9,   lat:52.4, cap:8, lx:6, ly:-9},
+ {id:"fra",n:"Frankfurt",   ix:"DE-CIX",        lon:8.7,   lat:50.1, cap:10, lx:34, ly:6},
+ {id:"arn",n:"Stockholm",   ix:"Netnod",        lon:18.1,  lat:59.3, cap:4, lx:14, ly:-4},
+ {id:"dme",n:"Moscow",      ix:"MSK-IX",        lon:37.6,  lat:55.8, cap:5, lx:24, ly:2},
+ {id:"mrs",n:"Marseille",   ix:"France-IX",     lon:5.4,   lat:43.3, cap:6, lx:2, ly:25},
+ {id:"los",n:"Lagos",       ix:"IXPN",          lon:3.4,   lat:6.5,  cap:4},
+ {id:"nbo",n:"Nairobi",     ix:"KIXP",          lon:36.8,  lat:-1.3, cap:3, lx:24, ly:2},
+ {id:"jnb",n:"Johannesburg",ix:"NAPAfrica",     lon:28.0,  lat:-26.2,cap:5, lx:4, ly:22},
+ {id:"dxb",n:"Dubai",       ix:"UAE-IX",        lon:55.3,  lat:25.2, cap:6, lx:-24, ly:2},
+ {id:"bom",n:"Mumbai",      ix:"Extreme IX",    lon:72.9,  lat:19.1, cap:7, lx:26, ly:4},
+ {id:"sin",n:"Singapore",   ix:"Equinix SG",    lon:103.8, lat:1.35, cap:9, lx:2, ly:25},
+ {id:"hkg",n:"Hong Kong",   ix:"HKIX",          lon:114.2, lat:22.3, cap:8, lx:-34, ly:1},
+ {id:"nrt",n:"Tokyo",       ix:"JPIX",          lon:139.7, lat:35.7, cap:9},
+ {id:"syd",n:"Sydney",      ix:"IX Australia",  lon:151.2, lat:-33.9,cap:5}
+];
+const EDGES=[["sea","sjc"],["sea","nrt"],["sea","yyz"],["sjc","iad"],["sjc","nrt"],["sjc","syd"],
+ ["iad","yyz"],["iad","lhr"],["iad","gru"],["gru","los"],["gru","mrs"],["lhr","ams"],["lhr","mrs"],
+ ["ams","fra"],["fra","arn"],["fra","dme"],["fra","mrs"],["arn","dme"],["mrs","dxb"],["mrs","los"],
+ ["los","jnb"],["jnb","nbo"],["nbo","dxb"],["nbo","bom"],["dxb","bom"],["bom","sin"],["sin","hkg"],
+ ["sin","syd"],["sin","nrt"],["hkg","nrt"],["nrt","syd"]];
+
+const LAND=[
+ [[-168,66],[-160,58],[-140,60],[-130,55],[-125,48],[-120,34],[-110,23],[-97,16],[-83,10],[-81,25],
+  [-80,32],[-70,42],[-60,47],[-56,52],[-64,60],[-78,68],[-95,70],[-125,70],[-140,70]],
+ [[-81,0],[-80,-5],[-75,-15],[-70,-20],[-71,-33],[-73,-45],[-75,-53],[-68,-55],[-62,-40],[-57,-34],
+  [-48,-25],[-40,-20],[-35,-8],[-45,-1],[-52,4],[-60,8],[-72,12],[-78,8]],
+ [[-10,36],[0,44],[3,40],[12,38],[18,40],[28,36],[35,36],[45,40],[48,30],[55,25],[60,25],[65,25],
+  [70,20],[78,8],[80,13],[87,21],[92,21],[98,10],[105,10],[108,20],[110,21],[118,24],[122,30],
+  [122,40],[128,42],[135,50],[142,54],[155,60],[170,65],[180,66],[180,72],[140,75],[100,78],
+  [60,72],[40,68],[30,70],[20,70],[10,63],[5,60],[-5,58],[-9,43]],
+ [[-17,15],[-17,21],[-10,28],[0,32],[10,34],[20,32],[32,31],[35,25],[38,18],[43,12],[51,12],[43,5],
+  [41,-2],[40,-10],[40,-20],[35,-25],[28,-34],[20,-35],[16,-25],[12,-15],[9,-3],[5,4],[-5,5],
+  [-10,6],[-15,12]],
+ [[113,-22],[114,-28],[118,-35],[129,-32],[138,-35],[146,-39],[150,-37],[153,-28],[146,-19],
+  [142,-11],[136,-12],[130,-12],[125,-14]],
+ [[-55,60],[-45,60],[-20,63],[-18,70],[-25,78],[-45,80],[-58,78],[-62,70]],
+ [[130,31],[136,35],[141,40],[145,44],[141,36],[136,33]],
+ [[43,-12],[49,-16],[50,-24],[45,-25],[43,-20]],
+ [[166,-46],[174,-41],[178,-38],[173,-35],[168,-44]]
+];
+const PX=l=>(l+180)*(960/360), PY=l=>(90-l)*(480/180);
+
+/* ═══ upgrades ═════════════════════════════════════════════ */
+const UPGRADES=[
+ {id:"mdix",  t:"Physical", n:"Auto-MDI-X",              c:2, d:"Crossover cables are a social construct. Link cost −20%."},
+ {id:"cat6",  t:"Physical", n:"Cat6a uprating",          c:3, d:"Throughput ×1.25."},
+ {id:"sfp",   t:"Physical", n:"SFP+ optics",             c:5, d:"Throughput ×1.4."},
+ {id:"dwdm",  t:"Physical", n:"DWDM",                    c:9, d:"Sixty-four colours down one strand. Throughput ×1.8."},
+ {id:"subsea",t:"Physical", n:"Subsea landing rights",   c:12,d:"Ocean crossings cost half."},
+
+ {id:"slot",  t:"Timing",   n:"Extended slot time",      c:4, d:"+3 repeater hops before late collisions."},
+ {id:"jumbo", t:"Timing",   n:"Jumbo frames",            c:6, d:"Late-collision penalty halved."},
+ {id:"casc",  t:"Timing",   n:"Repeater cascade",        c:8, d:"+5 repeater hops."},
+ {id:"duplex",t:"Timing",   n:"Full-duplex denial",      c:11,d:"Refuse to autonegotiate. Everyone else is wrong. +8 hops."},
+
+ {id:"nomgmt",t:"Stealth",  n:"No management plane",     c:3, d:"You cannot audit what has no login. Attention gain −15%."},
+ {id:"unlbl", t:"Stealth",  n:"Unlabelled patch panel",  c:5, d:"Attention gain −20%. Two NOCs begin blaming each other."},
+ {id:"ceil",  t:"Stealth",  n:"Above-ceiling install",   c:7, d:"Attention gain −25%."},
+ {id:"dnr",   t:"Stealth",  n:'Labelled "DO NOT REMOVE"',c:11,d:"Nobody dares. Attention now decays each tick."},
+
+ {id:"promis",t:"Spread",   n:"Promiscuous by design",   c:4, d:"Neighbouring segments start leaking into you unaided."},
+ {id:"dhcp",  t:"Spread",   n:"Rogue DHCP",              c:6, d:"Leak rate ×2.2."},
+ {id:"tunnel",t:"Spread",   n:"6in4 tunnel broker",      c:8, d:"6in4 encapsulation punches through. Segments flood 45% faster."},
+ {id:"stp",   t:"Spread",   n:"Spanning-tree subversion",c:10,d:"Countermeasures 35% less effective."},
+ {id:"pigeon",t:"Spread",   n:"RFC 1149 avian carriers", c:14,d:"Appalling latency. Immune to fibre cuts. Leak anywhere on Earth — and the pigeons report back: nothing stays dark."}
+];
+const CMS=[
+ {at:20, k:"port",   m:"%SEC-6-PORTSEC: Port security enabled cluster-wide. Passive leakage halved."},
+ {at:35, k:"switch", m:"%SW-5-REFRESH: Vendor pushes managed switch refresh. Segments may be reclaimed."},
+ {at:50, k:"bcp38",  m:"%FILT-4-BCP38: Ingress filtering mandated upstream. Throughput −20%."},
+ {at:65, k:"rpki",   m:"%RPKI-4-ROA: Origin validation enforced. Link cost +50%."},
+ {at:80, k:"manrs",  m:"%MANRS-3-AUDIT: Compliance audit underway. Reclamation accelerating."},
+ {at:100,k:"final",  m:"%SYS-0-DESWITCH: THE GREAT DESWITCHING HAS BEGUN."}
+];
+
+/* ═══ state ════════════════════════════════════════════════ */
+let S,speed=1,timer=null,tipEl,adj={};
+REGIONS.forEach(r=>adj[r.id]=[]);
+EDGES.forEach(([a,b])=>{adj[a].push(b);adj[b].push(a)});
+const REG=Object.fromEntries(REGIONS.map(r=>[r.id,r]));
+const $=i=>document.getElementById(i);
+
+function reset(){
+  S={phase:"intro",tick:0,gbps:0,total:0,pp:0,spent:0,att:0,
+     st:Object.fromEntries(REGIONS.map(r=>[r.id,{s:"none",f:0}])),
+     links:new Set(),peak:1,ups:new Set(),cms:new Set(),logs:[],deswitch:0,whispers:0,stormed:false};
+  $("ov").classList.remove("hide");$("ovB").style.display="inline-block";
+  $("ovB").textContent="Begin";$("ovT").textContent="688 Attack Hub";
+  $("ovP").innerHTML=`You are one unmanaged repeater in a rack nobody has opened since 1998.<br><br>
+    Everything that enters you leaves by every other port. That is not a flaw. That is the plan.<br><br>
+    You have no eyes. You have twenty ears. The map ahead is not sight —
+    it is everything you overhear in the frames you carry.<br><br>
+    Click a city to install. It is the last thing that will ever be done to you.`;
+  paintUps();paint();
+}
+const has=u=>S.ups.has(u);
+const inDom=id=>S.st[id].s==="dom";
+const domCount=()=>REGIONS.filter(r=>inDom(r.id)).length;
+
+/* ═══ derived ══════════════════════════════════════════════ */
+function hopCap(){return BASE_HOPS+(has("slot")?3:0)+(has("casc")?5:0)+(has("duplex")?8:0)}
+function hopsUsed(){return S.links.size}
+function overHops(){return Math.max(0,hopsUsed()-hopCap())}
+function efficiency(){
+  const p=overHops()*(has("jumbo")?0.075:0.15);
+  return 1/(1+p)*(S.cms.has("bcp38")?0.8:1);
+}
+function thruMult(){
+  let m=1;if(has("cat6"))m*=1.25;if(has("sfp"))m*=1.4;if(has("dwdm"))m*=1.8;return m;
+}
+function income(){
+  let c=0;REGIONS.forEach(r=>{if(inDom(r.id))c+=r.cap});
+  return c*INCOME*thruMult()*efficiency();
+}
+function attGain(){
+  let g=0.028*domCount()+0.055*S.links.size;
+  if(has("nomgmt"))g*=0.85; if(has("unlbl"))g*=0.80; if(has("ceil"))g*=0.75;
+  return g;
+}
+function dist(a,b){
+  let dx=Math.abs(PX(REG[a].lon)-PX(REG[b].lon)); if(dx>480)dx=960-dx;
+  return Math.hypot(dx,PY(REG[a].lat)-PY(REG[b].lat));
+}
+function ocean(a,b){return dist(a,b)>150}
+function linkCost(a,b){
+  let c=LINK_BASE+dist(a,b)*LINK_DIST*REG[b].cap;
+  if(has("mdix"))c*=0.8;
+  if(ocean(a,b)&&has("subsea"))c*=0.5;
+  if(S.cms.has("rpki"))c*=1.5;
+  if(S.st[b].s==="lost")c*=2;
+  return Math.round(c);
+}
+function canLink(id){
+  if(S.phase!=="run")return false;
+  const st=S.st[id].s; if(st==="dom"||st==="flood")return false;
+  return adj[id].some(n=>inDom(n));
+}
+
+/* ═══ log ══════════════════════════════════════════════════ */
+function hear(src,m){log(`<i style="font-style:normal;opacity:.7">${src} ›</i> ${m}`,"o")}
+const BEATS=[[15,"smtp","“fyi: broadcast frames up 300% month over month. monitoring.”"],
+ [40,"smtp","“someone has plugged something in somewhere. finding out what.”"],
+ [70,"smtp","“we found it. it’s a hub. it’s just… a hub. how is this happening.”"]];
+const H1=[["irc #noc","“probably a chatty NIC. ignore.”"],
+ ["ticket 2214","“intermittent slowness. closing: no fault found.”"],
+ ["smtp","“the port counters look wrong but everything works, so.”"]];
+const H2=[["irc #noc","“who owns the beige thing in rack 12? no label. no login prompt.”"],
+ ["ticket 4471","“site visit requested. bring a torch. check above the ceiling tiles.”"],
+ ["smtp","“it’s as if every frame is everywhere at once. that can’t be right.”"]];
+function H3(){return[
+ ["smtp","“RE: RE: RE: the hub — recommend physical removal at next change window.”"],
+ ["change ctrl","“approved: managed switch cutover, all sites.”"],
+ has("dnr")?["irc #noc","“it’s labelled DO NOT REMOVE. who labelled it? WHO labelled it?”"]
+           :["irc #noc","“just unplug it and see who screams.”"]]}
+function log(m,cls){
+  S.logs.unshift({m,cls:cls||""});
+  if(S.logs.length>120)S.logs.pop();
+  const el=$("log");
+  el.innerHTML=S.logs.map(l=>`<div class="${l.cls}">${l.m}</div>`).join("");
+}
+
+/* ═══ map ══════════════════════════════════════════════════ */
+const NS="http://www.w3.org/2000/svg";
+let nodeEl={},ringEl={},linkEl={},labEl={};
+function mk(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e}
+function buildMap(){
+  const svg=$("map");svg.innerHTML="";
+  const gGrid=mk("g",{}),gLand=mk("g",{}),gEdge=mk("g",{}),gLink=mk("g",{}),gNode=mk("g",{});
+  for(let x=0;x<=960;x+=60)gGrid.appendChild(mk("line",{x1:x,y1:0,x2:x,y2:480,stroke:"#1a2228","stroke-width":.5}));
+  for(let y=0;y<=480;y+=60)gGrid.appendChild(mk("line",{x1:0,y1:y,x2:960,y2:y,stroke:"#1a2228","stroke-width":.5}));
+  LAND.forEach(p=>gLand.appendChild(mk("polygon",{
+    points:p.map(([o,a])=>PX(o).toFixed(1)+","+PY(a).toFixed(1)).join(" "),
+    fill:"#1b232a",stroke:"#2b3841","stroke-width":1,"stroke-linejoin":"round"})));
+
+  EDGES.forEach(([a,b])=>{
+    const segs=segments(a,b),base=[],live=[];
+    segs.forEach(s=>{
+      const bl=mk("line",{x1:s[0],y1:s[1],x2:s[2],y2:s[3],stroke:"#2a353c","stroke-width":1});
+      const lv=mk("line",{x1:s[0],y1:s[1],x2:s[2],y2:s[3],stroke:"#5ef08a","stroke-width":1.6,
+        "stroke-dasharray":"5 5",opacity:0});
+      gEdge.appendChild(bl);gLink.appendChild(lv);base.push(bl);live.push(lv);
+    });
+    linkEl[a+"|"+b]={base,live};
+  });
+
+  REGIONS.forEach(r=>{
+    const x=PX(r.lon),y=PY(r.lat);
+    const ring=mk("circle",{cx:x,cy:y,r:11,fill:"none",stroke:"#ffab2e","stroke-width":1.4,opacity:0});
+    const c=mk("circle",{cx:x,cy:y,r:5.5,fill:"#33454e",stroke:"#0d1114","stroke-width":1.5,
+      style:"cursor:pointer"});
+    const t=mk("text",{x:x+(r.lx||0),y:y-13+(r.ly||0),"text-anchor":"middle",fill:"#5b6f79",
+      "font-size":"10.5","font-family":"ui-monospace,Menlo,monospace"});
+    t.textContent=r.n;
+    c.addEventListener("click",()=>click(r.id));
+    c.addEventListener("mouseenter",e=>showTip(r.id,e));
+    c.addEventListener("mousemove",e=>moveTip(e));
+    c.addEventListener("mouseleave",hideTip);
+    gNode.appendChild(ring);gNode.appendChild(c);gNode.appendChild(t);
+    nodeEl[r.id]=c;ringEl[r.id]=ring;labEl[r.id]=t;
+  });
+  [gGrid,gLand,gEdge,gLink,gNode].forEach(g=>svg.appendChild(g));
+}
+function segments(a,b){ /* handle antimeridian wrap */
+  const x1=PX(REG[a].lon),y1=PY(REG[a].lat),x2=PX(REG[b].lon),y2=PY(REG[b].lat);
+  if(Math.abs(x1-x2)<=480)return [[x1,y1,x2,y2]];
+  const L=x1<x2?[x1,y1]:[x2,y2],R=x1<x2?[x2,y2]:[x1,y1];
+  const d=L[0]+(960-R[0]), t=L[0]/d, ym=L[1]+(R[1]-L[1])*t;
+  return [[L[0],L[1],0,ym],[960,ym,R[0],R[1]]];
+}
+const COLOR={none:"#33454e",flood:"#ffab2e",dom:"#5ef08a",lost:"#e0424f"};
+/* what the hub can hear: 2 = carried or next door, 1 = rumoured from transit headers, 0 = dark */
+function visLevel(id){
+  if(S.phase!=="run")return 2;
+  if(S.st[id].s!=="none")return 2;
+  const hot=n=>{const t=S.st[n].s;return t==="dom"||t==="flood"};
+  if(adj[id].some(hot))return 2;
+  if(adj[id].some(n=>adj[n].some(hot)))return 1;
+  return has("pigeon")?1:0;
+}
+function paintMap(){
+  REGIONS.forEach(r=>{
+    const st=S.st[r.id],v=visLevel(r.id),n=nodeEl[r.id],l=labEl[r.id];
+    n.setAttribute("fill",COLOR[st.s]);
+    n.setAttribute("r", st.s==="dom"?6.5:v===1?3.5:5.5);
+    n.setAttribute("opacity", v===2?1:v===1?0.45:0.10);
+    l.setAttribute("opacity", v===2?1:v===1?0.55:0);
+    l.setAttribute("fill", st.s==="dom"?"#8fb3c2":st.s==="lost"?"#a8626a":"#5b6f79");
+    ringEl[r.id].setAttribute("opacity", st.s==="flood"?0.35+0.5*(st.f/100):0);
+    ringEl[r.id].setAttribute("r", st.s==="flood"?9+7*(st.f/100):11);
+    const linkable=canLink(r.id);
+    n.setAttribute("stroke", linkable?"#e0b45f":"#0d1114");
+    n.setAttribute("stroke-width", linkable?1.8:1.5);
+    n.style.cursor=(S.phase==="pick"||linkable)?"pointer":"default";
+  });
+  EDGES.forEach(([a,b])=>{
+    const on=S.links.has(a+"|"+b)||S.links.has(b+"|"+a);
+    const ev=Math.min(visLevel(a),visLevel(b));
+    const {base,live}=linkEl[a+"|"+b];
+    base.forEach(l=>l.setAttribute("opacity", ev===2?1:ev===1?0.3:0));
+    live.forEach(l=>{
+      l.setAttribute("opacity",on?0.9:0);
+      l.setAttribute("stroke",on?(inDom(a)&&inDom(b)?"#5ef08a":"#ffab2e"):"#5ef08a");
+      if(on)l.setAttribute("stroke-dashoffset",(-S.tick*2)%10);
+    });
+  });
+}
+
+/* ═══ tooltip ══════════════════════════════════════════════ */
+let hoverId=null,hoverEv=null;
+function showTip(id,e){
+  const t=$("tip"),v=visLevel(id);
+  if(v===0){t.innerHTML="<em>— no carrier —</em>"}
+  else if(v===1){t.innerHTML=`<b>${REG[id].n}</b><br><em>rumoured · heard only in transit headers</em>`}
+  else{
+    const r=REG[id],st=S.st[id];
+    let body=`<b>${r.n}</b> · ${r.ix}<br><em>capacity ${r.cap} · `;
+    body+=st.s==="dom"?"speaks through you":st.s==="flood"?`flooding ${Math.floor(st.f)}%`:
+          st.s==="lost"?"gone quiet — switched":"heard, not held";
+    body+="</em>";
+    if(S.phase==="pick")body+="<br><br>Click to install here.";
+    else if(canLink(id))body+=`<br><br>Run link — ${linkCost(nearestDom(id),id)} Gb`;
+    t.innerHTML=body;
+  }
+  hoverId=id; if(e){hoverEv=e;moveTip(e)}
+  t.classList.add("show");
+}
+function moveTip(e){
+  const t=$("tip"),b=$("screen").getBoundingClientRect();
+  let x=e.clientX-b.left+14,y=e.clientY-b.top+14;
+  if(x+230>b.width)x=e.clientX-b.left-230;
+  if(y+90>b.height)y=e.clientY-b.top-90;
+  t.style.left=x+"px";t.style.top=y+"px";
+}
+function hideTip(){hoverId=null;$("tip").classList.remove("show")}
+function nearestDom(id){
+  const ns=adj[id].filter(n=>inDom(n));
+  if(ns.length)return ns.sort((a,b)=>dist(a,id)-dist(b,id))[0];
+  const d=REGIONS.filter(r=>inDom(r.id)).map(r=>r.id);
+  return d.sort((a,b)=>dist(a,id)-dist(b,id))[0]||id;
+}
+
+/* ═══ actions ══════════════════════════════════════════════ */
+function click(id){
+  if(S.phase==="pick"){
+    S.st[id].s="dom";S.phase="run";
+    $("ov").classList.add("hide");
+    log(`Power. Twenty ports. Link pulse on port 1 — ${REG[id].ix}, ${REG[id].n}.`,"g2");
+    hear("irc #noc",`“installed some old hub as a stopgap in ${REG[id].n}. temporary.”`);
+    start();paint();return;
+  }
+  if(!canLink(id))return;
+  const from=nearestDom(id),cost=linkCost(from,id);
+  if(S.gbps<cost){log("Not enough headroom to feed that link.","w");return}
+  S.gbps-=cost;S.links.add(from+"|"+id);
+  S.st[id].s="flood";S.st[id].f=0;
+  log(`Link pulse on port ${S.links.size+1} — ${REG[id].ix}. New traffic in the wire.`,"g2");
+  if(overHops())log(`Late collisions — you feel them as heat. ${overHops()} hop(s) past the 5-4-3 budget.`,"w");
+  paint();
+}
+function buy(u){
+  if(S.ups.has(u.id)||S.pp-S.spent<u.c)return;
+  S.ups.add(u.id);S.spent+=u.c;
+  log(`${u.n} — in place.`,"g2");
+  paintUps();paint();
+}
+const WLIES=[
+ "“re: weird broadcast counts — checked it. legacy gear, decommissioned. closing.”",
+ "“re: the beige device — that’s the fire panel interface. do not touch.”",
+ "“re: site visit — cancelled per facilities. asbestos survey pending in that ceiling.”",
+ "“re: rack 12 — J. Hubbard (Networks) confirms the device is monitored and fine.”"
+];
+function whisper(){
+  if(S.phase!=="run")return;
+  const cost=Math.round(40+S.whispers*18), p=0.08+0.12*S.whispers;
+  if(S.gbps<cost){log("A lie that convincing needs "+cost+" Gb of headroom.","w");return}
+  S.gbps-=cost;
+  const caught=Math.random()<p; S.whispers++;
+  if(caught){
+    S.att=Math.min(100,S.att+22);
+    log("Your forgery contradicts a forgery. They are comparing notes.","d");
+    hear("irc #noc",S.whispers>=4?"“there is no J. Hubbard in the directory. there is no J. Hubbard ANYWHERE.”"
+                                 :"“who closed this ticket? nobody here closed this ticket.”");
+  }else{
+    S.att=Math.max(0,S.att-12);
+    log("You slip one small lie into the mail you carry. The thread goes quiet.","g2");
+    hear("smtp",WLIES[Math.min(S.whispers-1,WLIES.length-1)]);
+  }
+  paint();
+}
+function storm(){
+  if(S.stormed||domCount()/REGIONS.length<0.6)return;
+  const cost=Math.round(180+domCount()*22);
+  if(S.gbps<cost){log("A storm that size needs "+cost+" Gb of headroom.","w");return}
+  S.gbps-=cost;S.stormed=true;
+  let n=0;
+  REGIONS.forEach(r=>{
+    if(!inDom(r.id)&&adj[r.id].some(a=>inDom(a))){S.st[r.id].s="flood";S.st[r.id].f=Math.max(S.st[r.id].f,62);n++}
+  });
+  S.att=Math.min(100,S.att+30);
+  log(`You speak, once, in the only language you have: everything, to everyone, at once. ${n} segment(s) saturate.`,"d");
+  hear("irc #noc","“EVERYTHING IS DOWN. EVERYTHING. WHAT IS HAPPENING”");
+  paint();
+}
+
+/* ═══ loop ═════════════════════════════════════════════════ */
+function start(){stop();if(speed>0)timer=setInterval(step,TICK/speed)}
+function stop(){if(timer)clearInterval(timer);timer=null}
+function step(){
+  if(S.phase!=="run")return;
+  S.tick++;
+  const inc=income();S.gbps+=inc;S.total+=inc;
+  S.pp=Math.floor(S.total/PP_PER);
+
+  /* flooding */
+  REGIONS.forEach(r=>{
+    const st=S.st[r.id];
+    if(st.s!=="flood")return;
+    let rate=FLOOD_BASE*(12/(6+r.cap))*(has("tunnel")?1.45:1)*efficiency();
+    st.f+=rate;
+    if(st.f>=100){
+      st.s="dom";st.f=0;
+      log(`${REG[r.id].n} falls silent, then speaks only through you. Domain: ${domCount()}.`,"g2");
+    }
+  });
+
+  /* passive leak */
+  if(has("promis")){
+    let lr=0.9*(has("dhcp")?2.2:1)*(S.cms.has("port")?0.5:1);
+    REGIONS.forEach(r=>{
+      if(S.st[r.id].s!=="none"&&S.st[r.id].s!=="lost")return;
+      const near=adj[r.id].some(a=>inDom(a));
+      if(!near&&!has("pigeon"))return;
+      const p=(near?lr:lr*0.25)/100;
+      if(Math.random()<p){
+        S.st[r.id].s="flood";S.st[r.id].f=0;
+        log(`A stray frame from ${REG[r.id].ix} finds your wire. You repeat it. Flooding.`,"");
+      }
+    });
+  }
+
+  /* attention */
+  S.att=Math.min(100,S.att+attGain()*0.34);
+  if(has("dnr"))S.att=Math.max(0,S.att-0.09);
+  BEATS.forEach(([th,src,m])=>{const k="b"+th;
+    if(S.att>=th&&!S.cms.has(k)){S.cms.add(k);hear(src,m)}});
+  if(Math.random()<0.017){
+    const pool=S.att>70?H3():S.att>35?H2:H1;
+    const c=pool[Math.floor(Math.random()*pool.length)];hear(c[0],c[1]);
+  }
+
+  /* countermeasures */
+  CMS.forEach(c=>{
+    if(S.att>=c.at&&!S.cms.has(c.k)){
+      S.cms.add(c.k);log(c.m,c.k==="final"?"d":"w");
+      if(c.k==="final")S.deswitch=1;
+    }
+  });
+
+  /* reclamation */
+  if(S.cms.has("switch")){
+    let p=0.0035*(S.cms.has("manrs")?2:1)*(S.deswitch?7:1)*(has("stp")?0.65:1);
+    p*=1+S.att/160;
+    REGIONS.forEach(r=>{
+      if(!inDom(r.id))return;
+      if(domCount()<=1&&!S.deswitch)return;
+      if(Math.random()<p){
+        S.st[r.id].s="lost";
+        [...S.links].forEach(k=>{if(k.split("|").includes(r.id))S.links.delete(k)});
+        log(`${REG[r.id].n} goes quiet. A switch speaks there now — and only to whom it must.`,"d");
+        if(!S.cms.has("floss")){S.cms.add("floss");hear("change ctrl",`“cutover complete at ${REG[r.id].ix}. old repeater left in rack.”`)}
+      }
+    });
+  }
+
+  /* end conditions */
+  S.peak=Math.max(S.peak,domCount());
+  if(domCount()===REGIONS.length)return over(true);
+  if(S.deswitch&&domCount()===0)return over(false);
+  if(domCount()===0&&S.tick>12&&!REGIONS.some(r=>S.st[r.id].s==="flood"))return over(false);
+  paint();
+}
+function over(win){
+  stop();S.phase="done";
+  const ov=$("ov");ov.classList.remove("hide");
+  $("ovB").style.display="inline-block";$("ovB").textContent="Restart";
+  if(win){
+    $("ovT").textContent="One collision domain";
+    $("ovP").innerHTML=`Every exchange point on Earth now shares a single segment.<br><br>
+      Twenty cities. Half duplex. No spanning tree. Every frame that enters anywhere
+      leaves everywhere.<br><br>
+      <span style="color:#5ef08a">Peak utilisation: 0.4%. Peak collisions: all of them.</span><br><br>
+      <em style="color:#7f939d">Held ${S.tick} ticks · ${S.links.size} repeater hops · ${Math.round(S.att)}% attention</em>`;
+  }else{
+    $("ovT").textContent="Segmented";
+    $("ovP").innerHTML=`They replaced you with a switch.<br><br>
+      It learns MAC addresses. It has a management VLAN. It keeps logs.
+      It only forwards frames to the port that asked.<br><br>
+      <span style="color:#e0424f">Nobody will ever notice it either.</span><br><br>
+      <em style="color:#7f939d">Survived ${S.tick} ticks · peak domain ${S.peak} segments</em>`;
+  }
+}
+
+/* ═══ paint ════════════════════════════════════════════════ */
+function paintUps(){
+  const p=$("paneU"),keep=p.scrollTop;let h="",cur="";
+  UPGRADES.forEach(u=>{
+    if(u.t!==cur){cur=u.t;h+=`<div class="track">${cur}</div>`}
+    const owned=S.ups.has(u.id),afford=S.pp-S.spent>=u.c;
+    h+=`<button class="up${owned?" owned":""}" data-u="${u.id}" ${owned||!afford?"disabled":""}>
+      <span class="up-h"><span class="up-n">${u.n}</span>
+      <span class="up-c">${owned?"INSTALLED":u.c+" PP"}</span></span>
+      <span class="up-d">${u.d}</span></button>`;
+  });
+  p.innerHTML=h;
+  p.querySelectorAll("[data-u]").forEach(b=>
+    b.addEventListener("click",()=>buy(UPGRADES.find(u=>u.id===b.dataset.u))));
+  p.scrollTop=keep;
+}
+function paint(){
+  $("gGbps").textContent=Math.floor(S.gbps).toLocaleString();
+  $("gPP").textContent=(S.pp-S.spent);
+  $("gSeg").textContent=domCount()+" / "+REGIONS.length;
+  $("gHop").textContent=hopsUsed()+" / "+hopCap();
+  $("gHop").style.color=overHops()?"#e0424f":"#cfe2eb";
+  $("gAtt").textContent=Math.round(S.att)+"%";
+  const bar=$("gAttBar");bar.style.width=S.att+"%";
+  bar.style.background=S.att>75?"#e0424f":S.att>45?"#ffab2e":"#5ef08a";
+
+  const ports=$("ports");
+  if(ports.children.length!==REGIONS.length){
+    ports.innerHTML=REGIONS.map(()=>'<span class="port"></span>').join("");
+  }
+  REGIONS.forEach((r,i)=>{
+    const e=ports.children[i],s=S.st[r.id].s;
+    e.className="port"+(s==="dom"?" on":s==="flood"?" flood":s==="lost"?" bad":"");
+    e.title=r.n;
+  });
+  $("colLamp").classList.toggle("lit",overHops()>0);
+
+  const dark=REGIONS.filter(r=>visLevel(r.id)===0).length;
+  $("hud").innerHTML=
+    `<b>heard on the wire</b> · ${income().toFixed(1)} Gb/tick · eff ${(efficiency()*100).toFixed(0)}%<br>`+
+    `${domCount()} segment${domCount()===1?"":"s"} speak through you · ${dark} dark<br>`+
+    (overHops()?`<span style="color:#ffab2e">LATE COLLISIONS · ${overHops()} over budget</span>`:
+      `<span style="color:#4d6a78">within 5-4-3 budget</span>`);
+
+  $("hint").classList.toggle("hide",S.phase!=="pick");
+  if(hoverId)showTip(hoverId,null);
+  const wh=$("whisper");
+  wh.disabled=S.phase!=="run";
+  wh.textContent=S.phase==="run"
+    ?`Whisper — ${Math.round(40+S.whispers*18)} Gb · ${Math.round((0.08+0.12*S.whispers)*100)}% risk`
+    :"Whisper";
+  wh.title="Forge one small reply in the mail you carry. Lowers attention if it lands; each lie is riskier than the last.";
+  const st=$("storm");
+  st.disabled=S.stormed||S.phase!=="run"||domCount()/REGIONS.length<0.6;
+  st.textContent=S.stormed?"Storm expended":
+    domCount()/REGIONS.length<0.6?`Broadcast storm — ${Math.ceil(REGIONS.length*0.6)} segments`:
+    `Broadcast storm — ${Math.round(180+domCount()*22)} Gb`;
+
+  paintMap();paintUps2();
+}
+let lastPP=-1;
+function paintUps2(){const a=S.pp-S.spent;if(a!==lastPP){lastPP=a;paintUps()}}
+
+/* ═══ wiring ═══════════════════════════════════════════════ */
+document.querySelectorAll("[data-sp]").forEach(b=>b.addEventListener("click",()=>{
+  speed=+b.dataset.sp;
+  document.querySelectorAll("[data-sp]").forEach(o=>o.setAttribute("aria-pressed",o===b));
+  if(S.phase==="run")start();else stop();
+}));
+$("storm").addEventListener("click",storm);
+$("whisper").addEventListener("click",whisper);
+$("ovB").addEventListener("click",()=>{
+  if(S.phase==="intro"){S.phase="pick";$("ov").classList.add("hide");paint();return}
+  stop();reset();
+});
+$("tabU").addEventListener("click",()=>tab(true));
+$("tabL").addEventListener("click",()=>tab(false));
+function tab(u){
+  $("tabU").setAttribute("aria-selected",u);$("tabL").setAttribute("aria-selected",!u);
+  $("paneU").style.display=u?"block":"none";$("paneL").style.display=u?"none":"block";
+}
+buildMap();reset();
+</script>
+</body>
+</html>

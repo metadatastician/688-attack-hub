@@ -1,0 +1,89 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# The real gate for 688 Attack Hub. Every step here can fail; none of them is
+# annotate-only. If you add a step, make sure it can actually go red — a check
+# that cannot fail is worse than no check, because it reads as coverage.
+#
+# This is a single self-contained HTML/CSS/JS file with zero dependencies, so
+# there is no setup-node, no install step, and no build. Every `uses:` is
+# pinned to a full commit SHA: the org enforces sha_pinning_required, and a tag
+# ref produces startup_failure at 0s — a check that never runs.
+#
+# Code scanning is NOT here: it runs via GitHub code-scanning default setup
+# (actions + javascript, extended suite, weekly). An advanced codeql.yml would
+# conflict with default setup and fail permanently.
+
+name: ci
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integrity:
+    name: repository integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: The game file exists and is well-formed HTML
+        run: |
+          set -euo pipefail
+          test -f 688-attack-hub.html
+          grep -q '<!DOCTYPE html>' 688-attack-hub.html
+          grep -q '</html>' 688-attack-hub.html
+          echo "688-attack-hub.html present ($(wc -c < 688-attack-hub.html) bytes)"
+
+      - name: The game makes no network or exec calls
+        run: |
+          set -euo pipefail
+          # This is a client-side toy, not a real network tool. If any of
+          # these ever appear, the honest docs (AUDIT.adoc, ARCHITECTURE.md)
+          # claiming "no network calls" go stale and must be corrected first.
+          if grep -qE 'fetch\(|XMLHttpRequest|WebSocket|\beval\(|new Function\(' 688-attack-hub.html; then
+            echo "::error::688-attack-hub.html now contains a network/eval primitive — update AUDIT.adoc before merging"
+            exit 1
+          fi
+          echo "no network or eval primitives found"
+
+      - name: No unsubstituted template placeholders
+        run: |
+          set -euo pipefail
+          # RSR template placeholders are doubled-brace SHOUTY_SNAKE tokens.
+          # Narrower than a bare "{{" because GitHub Actions expression syntax
+          # also doubles braces, and a loose probe flags every workflow that
+          # uses one.
+          if grep -rlE '[{]{2}[A-Z][A-Z0-9_]*[}]{2}' --exclude-dir=.git . ; then
+            echo "::error::the files above still contain template placeholders"
+            exit 1
+          fi
+          echo "no template placeholders remain"
+
+      - name: SPDX identifier present on every .a2ml file
+        run: |
+          set -euo pipefail
+          fail=0
+          while IFS= read -r f; do
+            if ! head -3 "$f" | grep -q 'SPDX-License-Identifier:'; then
+              echo "::error file=$f::missing SPDX identifier"; fail=1
+            fi
+          done < <(find . -name '*.a2ml' -not -path './.git/*')
+          [ "$fail" = 0 ]
+
+      - name: Every action ref is pinned to a full commit SHA
+        run: |
+          set -euo pipefail
+          if grep -rhoE 'uses: *[A-Za-z0-9_.-]+/[A-Za-z0-9_./-]+@[^ ]+' .github/workflows/ \
+             | grep -vE '@[0-9a-f]{40}$'; then
+            echo "::error::the above action refs are not pinned to a 40-character commit SHA"
+            exit 1
+          fi
+          echo "all action refs are SHA-pinned"

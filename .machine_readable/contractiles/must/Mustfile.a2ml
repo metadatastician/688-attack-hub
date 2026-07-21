@@ -1,15 +1,15 @@
-# SPDX-License-Identifier: MPL-2.0
-# Mustfile — Physical state contract for rsr-template-repo
-# Author: Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Mustfile — Physical-state contract for 688 Attack Hub
+# Author: Jonathan D.A. Jewell (hyperpolymath)
 #
-# What MUST be true about this repository. Hard requirements.
-# Run with: must check
-# Fix with: must fix (where a deterministic fix exists)
+# What MUST be true about this repository. Hard requirements. Several of
+# these ARE mechanically enforced (by `ci.yml`, on every push); others are
+# documentary until something automates them — each entry says which.
 
 @abstract:
-Physical-state invariants for rsr-template-repo. This is the canonical
-RSR template repository. These are hard requirements — CI and pre-commit
-hooks fail if any check fails.
+Physical-state invariants for 688 Attack Hub, a single self-contained
+browser game with no build system. Probes target this repository's real
+tree, not a generic template.
 @end
 
 ## File Presence
@@ -18,85 +18,94 @@ hooks fail if any check fails.
 - description: LICENSE file must exist
 - run: test -f LICENSE
 - severity: critical
+- enforced-by: not yet automated (documentary)
+
+### license-texts-vendored
+- description: Every SPDX identifier used in the tree has its text vendored under LICENSES/
+- run: test -f LICENSES/AGPL-3.0-or-later.txt && test -f LICENSES/CC-BY-SA-4.0.txt && test -f LICENSES/MPL-2.0.txt
+- severity: critical
+- enforced-by: not yet automated (documentary)
+
+### game-file-present
+- description: 688-attack-hub.html must exist at the repository root and be well-formed
+- run: test -f 688-attack-hub.html && grep -q '<!DOCTYPE html>' 688-attack-hub.html && grep -q '</html>' 688-attack-hub.html
+- severity: critical
+- enforced-by: ci.yml `integrity` job
 
 ### readme-present
-- description: README.adoc must exist
-- run: test -f README.adoc
+- description: README.md must exist
+- run: test -f README.md
 - severity: critical
+- enforced-by: not yet automated (documentary)
 
 ### security-policy
 - description: SECURITY.md must exist
-- run: test -f SECURITY.md || test -f .github/SECURITY.md
+- run: test -f SECURITY.md
 - severity: critical
+- enforced-by: not yet automated (documentary)
 
 ### ai-manifest
 - description: 0-AI-MANIFEST.a2ml must exist
 - run: test -f 0-AI-MANIFEST.a2ml
 - severity: critical
+- enforced-by: not yet automated (documentary)
 
 ### governance-docs
 - description: GOVERNANCE.adoc, MAINTAINERS.adoc, CODEOWNERS must exist
 - run: test -f GOVERNANCE.adoc && test -f MAINTAINERS.adoc && test -f .github/CODEOWNERS
 - severity: critical
+- enforced-by: not yet automated (documentary)
+
+## The central invariant
+
+### no-network-primitive
+- description: The game makes no network calls and no dynamic-code execution
+- run: "! grep -qE 'fetch\\(|XMLHttpRequest|WebSocket|eval\\(|new Function\\(' 688-attack-hub.html"
+- severity: critical
+- enforced-by: ci.yml `integrity` job — this is the one invariant this repo cares about mechanically enforcing above all others
+
+## Directory structure
 
 ### machine-readable-dir
-- description: .machine_readable/ directory must exist
-- run: test -d .machine_readable
+- description: .machine_readable/ directory must exist, with descriptiles + contractiles + rsr-profile.a2ml
+- run: test -d .machine_readable/descriptiles && test -d .machine_readable/contractiles && test -f .machine_readable/rsr-profile.a2ml
 - severity: critical
+- enforced-by: not yet automated (documentary)
 
-## Directory Structure
-
-### contractiles-complete
-- description: All required contractile directories exist
-- run: test -d .machine_readable/contractiles && test -d .machine_readable/contractiles/bust && test -d .machine_readable/contractiles/dust
+### contractile-registry-present
+- description: The contractile registry INDEX.a2ml exists
+- run: test -f .machine_readable/contractiles/INDEX.a2ml
 - severity: critical
+- enforced-by: not yet automated (documentary)
 
-### contractiles-files-present
-- description: All four primary contractile files exist
-- run: test -f .machine_readable/contractiles/Intentfile.a2ml && test -f .machine_readable/contractiles/Mustfile.a2ml && test -f .machine_readable/contractiles/Trustfile.a2ml && test -f .machine_readable/contractiles/Adjustfile.a2ml
+### rsr-profile-present
+- description: The declared RSR capability profile exists
+- run: test -f .machine_readable/rsr-profile.a2ml
 - severity: critical
+- notes: Gates which RSR criteria are applicable. Declaring a capability this repo lacks would score it against a module it does not carry.
 
-### bust-dust-files-present
-- description: Bustfile and Dustfile exist in their directories
-- run: test -f .machine_readable/contractiles/bust/Bustfile.a2ml && test -f .machine_readable/contractiles/dust/Dustfile.a2ml
-- severity: critical
-
-### six-directory-present
-- description: descriptiles directory exists with required files
-- run: test -d .machine_readable/descriptiles && test -f .machine_readable/descriptiles/META.a2ml && test -f .machine_readable/descriptiles/ECOSYSTEM.a2ml && test -f .machine_readable/descriptiles/STATE.a2ml && test -f .machine_readable/descriptiles/PLAYBOOK.a2ml && test -f .machine_readable/descriptiles/AGENTIC.a2ml && test -f .machine_readable/descriptiles/NEUROSYM.a2ml
-- severity: critical
-
-### anchors-directory
-- description: anchors directory exists in descriptiles
-- run: test -d .machine_readable/descriptiles/anchors
+### well-known-present
+- description: The .well-known trio exists
+- run: test -f .well-known/ai.txt && test -f .well-known/humans.txt && test -f .well-known/security.txt
 - severity: warning
+- enforced-by: not yet automated (documentary)
 
-### self-validating-structure
-- description: self-validating directory has k9-svc and examples
-- run: test -d .machine_readable/self-validating && test -d .machine_readable/self-validating/k9-svc && test -d .machine_readable/self-validating/examples
-- severity: warning
+## Template integrity
 
-## Template Integrity
-
-### no-placeholder-values
-- description: No placeholder values remain in template files
-- run: test -z "$(grep -r '{{' .machine_readable/contractiles/ 2>/dev/null)"
+### no-template-placeholders
+- description: No unsubstituted template placeholders remain anywhere in the tree
+- run: "! grep -rlE '[{]{2}[A-Z][A-Z0-9_]*[}]{2}' --exclude-dir=.git . 2>/dev/null | head -1 | grep -q ."
 - severity: critical
-- notes: All placeholders must be substituted when copying this template
+- enforced-by: ci.yml `integrity` job
 
-### template-readonly
-- description: Template marker files are not modified
-- run: grep -q 'RSR_TEMPLATE_DO_NOT_EDIT' .machine_readable/0.1-AI-MANIFEST.a2ml
-- severity: warning
-
-## Git State
-
-### no-untracked-contractiles
-- description: All contractile files are tracked in git
-- run: test -z "$(git ls-files -o --exclude-standard .machine_readable/contractiles/ 2>/dev/null)"
+### a2ml-spdx-headers
+- description: Every .a2ml file carries an SPDX identifier
+- run: "! for f in $(find . -name '*.a2ml' -not -path './.git/*'); do head -3 \"$f\" | grep -q 'SPDX-License-Identifier:' || echo BAD; done | grep -q BAD"
 - severity: critical
+- enforced-by: ci.yml `integrity` job
 
-### signed-commits
-- description: All commits must be signed
-- run: git verify-commit HEAD
-- severity: critical
+## No verification ledger to check
+
+This repo has no `src/verify*.mjs` scripts and no `VERIFICATION.md` — see
+AUDIT.adoc. There is nothing to add here that mirrors f19-stealth-glider's
+build-reproducibility probe, because there is no build.
