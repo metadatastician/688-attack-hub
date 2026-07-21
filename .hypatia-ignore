@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# .hypatia-ignore — scoped, documented exemptions for the Hypatia scanner.
+#
+# Format (one entry per line):
+#     <rule_module>/<rule_type>:<path-fragment>
+#     <rule_module>/*:<path-fragment>          (any type in module)
+#     <path-fragment>                           (any rule, any module)
+#
+# Lines starting with `#` are comments. A path-fragment is a substring match
+# against the repo-relative file path. Built-in defaults live in Hypatia's
+# lib/hypatia/scanner_suppression.ex — do not duplicate them here. Each entry
+# below carries a stated reason. Prefer fix-the-code or an inline directive
+# over an entry here; this file is for whole-file/directory exemptions.
+
+# ─── docs-template/ describes DOWNSTREAM repos, not this one ─────────────
+#
+# `docs-template/` is the canonical template of documentation that gets
+# copied into scaffolded repos. Its example paths (e.g. `src/middleware/…`,
+# `src/main.rs`) describe a hypothetical generated project, so they
+# legitimately do not resolve against this template's own tree. SD022
+# (stale `src/<dir>/` reference) is therefore a structural false positive
+# for everything under this directory — mirrors the built-in CHANGELOG.md
+# and third_party/ carve-outs. Scaffolded repos inherit this file, so the
+# exemption travels with the template.
+structural_drift/SD022:docs-template/

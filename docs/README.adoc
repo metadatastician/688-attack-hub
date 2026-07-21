@@ -1,0 +1,16 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= Documentation Layout
+
+Primary tracks:
+
+* `theory/` for formal and conceptual material
+* `practice/` for operational and implementation material
+* `maintenance/` for baseline checklists and release hard-pass runbooks
+* `whitepapers/academic/` for research-facing whitepapers
+* `whitepapers/industry/` for industry/outreach whitepapers
+
+Core docs:
+
+* `maintenance/MAINTENANCE-CHECKLIST.md`
+* `practice/SOFTWARE-DEVELOPMENT-APPROACH.adoc`

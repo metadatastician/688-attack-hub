@@ -1,0 +1,95 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= AFFIRMATION — {{PROJECT_NAME}}, as of <UTC timestamp>
+:toc: macro
+:toclevels: 2
+
+_the No-Bullshit file: what we affirm was true and checkable at this moment._
+
+[NOTE]
+====
+*This file is a template.* Replace the `{{…}}` placeholders and the `<…>` anchor
+fields, then re-run your project's own checks in the same session before signing.
+
+An *affirmation* is a solemn declaration of the truth of a statement, made by
+someone who _declines to swear an oath_ — our truth-as-best-believed at a stamped
+instant, binding on our honesty, not a claim of infallibility. It is the third of
+the README / EXPLAINME / AFFIRMATION trio:
+
+[cols="1,3,2",options="header"]
+|===
+| File | Answers | Tense
+| `README.adoc` | _Where is this going, and why?_ — steering, intent, vision | future / aspirational
+| `EXPLAINME.adoc` | _How is it built, and what's the evidence?_ — engineering | descriptive / mechanism
+| *`AFFIRMATION.adoc`* (this file) | _What can we honestly affirm was *true and checkable* at a stamped moment?_ | a frozen instant, falsifiable
+|===
+====
+
+toc::[]
+
+== What this is, and how it works
+
+*What it is.* A short, dated, signed snapshot of what {{OWNER}} can honestly and
+verifiably claim about *{{PROJECT_NAME}}* at one exact commit. Nothing here is
+marketing and nothing is a promise about the future — those live in the README.
+This file is the receipt.
+
+*How it stays trustworthy.* Three moving parts:
+
+. *Ground truth, not memory.* Every claim below must be produced by _running the
+  project's own checks_ in the session that writes this file (build, tests,
+  typecheck, `just audit`). Where a status doc, the `Justfile`, or memory says
+  otherwise, the live run wins and the contradiction is flagged here.
+. *A frozen anchor.* The file names the exact commit SHA, branch, UTC timestamp,
+  and toolchain (see <<verifiable-anchor>>), so "true" always means "true _at
+  this point_". Move the SHA and this file is a draft until it is re-run.
+. *A real signature.* It is landed by a *signed git commit*; that signature over
+  this content at the anchored SHA is what makes the affirmation tamper-evident
+  and attributable — not the prose alone.
+
+*We are fallible.* This is our best honest belief, not a proof of its own
+correctness. Treat it as a falsifiable claim, not gospel.
+
+== The epistemic contract (read this before you trust _or_ attack)
+
+This document records {{OWNER}}'s *best belief* at the timestamp below. It is
+*not a guarantee of correctness.* The only guarantee is *no intentional
+overclaim*: where something is proven we say "proven"; where it is a documented
+trust boundary, an experiment, or an unwired module, we say so; where a claim is
+the README's aspiration rather than a checked result, we say so. An honest claim
+that later turns out false is an *error to be fixed* — not a lie.
+
+*Standing invitation to refute.* You are invited to bulldoze any claim in this
+file. Bring a counter-example, a failing run, or a contradicting source.
+
+== What we affirm (fill in — delete the examples)
+
+[cols="2,1,3",options="header"]
+|===
+| Claim | Status | Evidence (command / `file:line`)
+| _e.g. The library builds clean_ | affirmed | `just build` at the anchor SHA
+| _e.g. The ABI seam typechecks_ | affirmed | `idris2 --typecheck abi.ipkg`
+| _e.g. Feature X is complete_ | aspiration | README §… (not yet checked)
+|===
+
+== What we do NOT claim
+
+* List the known gaps, trust boundaries, postulates, unwired modules, and stale
+  docs here. Silence is not affirmation — name what you have *not* verified.
+
+[#verifiable-anchor]
+== Verifiable anchor
+
+[cols="1,3"]
+|===
+| Project | {{PROJECT_NAME}}
+| Repository | https://{{FORGE}}/{{OWNER}}/{{REPO}}
+| Commit (SHA) | <full commit SHA at time of signing>
+| Branch | {{MAIN_BRANCH}}
+| Timestamp (UTC) | <ISO-8601 UTC timestamp>
+| Toolchain | <compilers / provers / versions used to ground the claims>
+| Affirmed by | {{AUTHOR}} <{{AUTHOR_EMAIL}}>
+|===
+
+_Landed by a signed git commit. Verify with `git log --show-signature` that the
+anchor SHA above matches the commit that introduced this affirmation._

@@ -1,0 +1,33 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= GitHub Workflows — what runs, and why some look duplicated
+
+This directory holds the repo's CI/CD. A few workflows *look* like they overlap
+but are deliberately distinct — documented here so the apparent duplication is
+not "tidied away" into a real coverage gap.
+
+== Hypatia runs in two places (on purpose)
+
+* `hypatia-scan.yml` — the **standalone security scan** (push / PR / weekly).
+  Independent; this is the repo's own Hypatia coverage.
+* `static-analysis-gate.yml` -> `hypatia-scan` job — runs Hypatia as part of the
+  **gate**, then the `deposit-findings` job hands the results to the
+  **gitbot-fleet learning** pipeline. This job is also a *required status check*.
+
+Same tool, two different consumers (security scan vs fleet learning). Removing
+either loses real function — keep both.
+
+== Secret scanning is single-sourced
+
+`secret-scanner.yml` calls the standards reusable (gitleaks + a Rust-secrets
+check). An inline TruffleHog job was removed: the reusable deliberately retired
+TruffleHog as redundant with gitleaks, so re-adding it was duplicated work, not
+extra coverage.
+
+== SAST tools are complementary, not redundant
+
+* `codeql.yml` — CodeQL (matrix defaults to `actions`; every repo has workflows).
+* `sonarqube.yml` — SonarCloud (shell / JS surface; see `sonar-project.properties`).
+* `static-analysis-gate.yml` — panic-attack + Hypatia gate (see above).
+
+Each targets a different language/surface; together they cover what no single
+analyser does.

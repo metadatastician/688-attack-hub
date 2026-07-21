@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# rsr-profile.a2ml — this repo's declared RSR v2.0 capabilities.
+#
+# Authored in the A2ML record dialect (hyperpolymath/standards
+# a2ml/RECORD-DIALECT-SPEC.adoc). It declares which capabilities this repo has,
+# per TEMPLATE-APPLICABILITY-POLICY.adoc; the RSR v2.0 conformance oracle
+# (hypatia Hypatia.Rules.RsrConformance) uses `capabilities` to compute the
+# APPLICABLE criteria set — a gated criterion is scored only when its gating
+# capability appears below; everything else is `na` and excluded from the
+# denominator.
+#
+# rsr-template-repo is deliberately MAXIMAL: it ships scaffolding for FFI/ABI
+# seams, in-tree formal proofs, a container, a reproducible build, benchmarks,
+# a docs site, and the full governance trio — so a repo scaffolded FROM it can
+# adopt any of them. Its declared set is therefore near-total, which is exactly
+# what makes it the dogfood target (the gate requires Gold on the applicable
+# set). Every capability below is grounded in a file/dir that actually exists
+# in this tree; capabilities it does NOT have (rust, affinescript, mobile,
+# web-ui, api-service, published-package) are omitted so the oracle does not
+# score this repo against modules it does not carry.
+
+[rsr-profile]
+version = "1.0.0"
+spec = "rsr-criteria-v2"
+declares-against = "2.0.0-draft"
+# Effective capability set (direct declaration; no preset shorthand used).
+capabilities = [
+  "zig",                # src/interface/ffi/build.zig + Zig FFI layer
+  "idris2",             # abi.ipkg + src/interface/Abi/ (dependent-typed ABI)
+  "bash",               # scripts/*.sh automation
+  "cli",                # src/ command-line entry scaffolding
+  "library",            # consumed/published as a library surface
+  "ffi",                # C-ABI FFI seam (Zig), src/interface/ffi/
+  "abi",                # formally specified ABI: abi.ipkg + src/interface/Abi/ proofs
+  "formal-proofs",      # verification/proofs/ (in-tree mechanised proofs)
+  "docs-site",          # .github/workflows/pages.yml (casket/Pages)
+  "container",          # container/ + .devcontainer/Containerfile
+  "reproducible-build", # build/guix.scm
+  "benchmarks",         # benches/
+  "governance-tier",    # full AUDIT/AFFIRMATION/GOVERNANCE/MAINTAINERS trio
+]
+
+[notes]
+# Capabilities intentionally NOT declared (no corresponding code in tree):
+#   rust           — no *.rs / Cargo.toml (the FFI/ABI layer is Zig + Idris2)
+#   affinescript   — no *.affine
+#   mobile         — no Tauri/Dioxus app
+#   web-ui         — no browser UI
+#   api-service    — not a network daemon
+#   published-package — a scaffold template, not itself a registry artifact
+omitted-rationale = "Declaring a capability this repo lacks would make the oracle score it against a module it does not carry — the over-scaffolding failure v2.0 fixes. See TEMPLATE-APPLICABILITY-POLICY.adoc."
