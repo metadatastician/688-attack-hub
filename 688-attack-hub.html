@@ -225,6 +225,9 @@ body{
     <button class="btn" data-sp="1" aria-pressed="true">1×</button>
     <button class="btn" data-sp="2">2×</button>
     <button class="btn" data-sp="4">4×</button>
+    <span class="lbl">View</span>
+    <button class="btn" data-view="flat" aria-pressed="true">Flat</button>
+    <button class="btn" data-view="globe" aria-pressed="false">Globe</button>
     <button class="btn whisper" id="whisper" disabled>Whisper</button>
     <button class="btn storm" id="storm" disabled>Broadcast storm</button>
   </div>
@@ -285,6 +288,107 @@ const LAND=[
  [[166,-46],[174,-41],[178,-38],[173,-35],[168,-44]]
 ];
 const PX=l=>(l+180)*(960/360), PY=l=>(90-l)*(480/180);
+
+/* ═══ projection ═══════════════════════════════════════════
+   Two views of the same lon/lat data. Flat is plate carrée —
+   the original map, unchanged. Globe is an orthographic
+   projection: a real sphere, no library, no textures, just
+   the trig. Gameplay never learns which is active; click(),
+   buy(), step() and visLevel() all go through project().     */
+const VIEW={mode:"flat",spin:0};
+const GL={R:206,CX:480,CY:240};
+const SEG=24;                    /* sub-segments per backbone edge */
+const D2R=Math.PI/180;
+const wrap180=d=>((d%360)+540)%360-180;
+
+let SPC=1,SPS=0;                 /* cos/sin of the spin, cached per frame */
+function spinCache(){const a=-VIEW.spin*D2R;SPC=Math.cos(a);SPS=Math.sin(a)}
+
+/* lon/lat -> unit vector on the sphere, in the unrotated frame */
+function unit(lon,lat){
+  const p=lat*D2R,t=lon*D2R,cp=Math.cos(p);
+  return [cp*Math.sin(t),Math.sin(p),cp*Math.cos(t)];
+}
+/* unit vector -> screen, spun about the polar axis. z>0 is the near face. */
+function projVec(v){
+  const x=v[0]*SPC+v[2]*SPS, z=v[2]*SPC-v[0]*SPS;
+  return {x:GL.CX+GL.R*x, y:GL.CY-GL.R*v[1], vis:z>0, z};
+}
+function project(lon,lat){
+  return VIEW.mode==="flat"
+    ? {x:PX(lon),y:PY(lat),vis:true,z:1}
+    : projVec(unit(lon,lat));
+}
+
+/* Stitch projected points into a path, breaking the pen wherever a
+   segment is hidden by the horizon or jumps the antimeridian. One
+   <path> with several M-subpaths costs one attribute write per edge. */
+function stitch(pts){
+  let d="",pen=false;
+  for(let i=0;i<pts.length-1;i++){
+    const p=pts[i],q=pts[i+1];
+    if(!(p.vis&&q.vis&&Math.abs(p.x-q.x)<=480)){pen=false;continue}
+    if(!pen){d+="M"+p.x.toFixed(1)+" "+p.y.toFixed(1);pen=true}
+    d+="L"+q.x.toFixed(1)+" "+q.y.toFixed(1);
+  }
+  return d;
+}
+
+/* A backbone run between two exchanges.
+   Flat: interpolate along the SHORTER longitude delta. Lerping raw
+   longitudes would send Seattle->Tokyo (-122.3 -> +139.7) the long way
+   round, straight across Eurasia, with both endpoints still correct.
+   Globe: slerp, which takes the shorter great circle for free. */
+function edgeD(a,b){
+  const A=REG[a],B=REG[b],pts=[];
+  if(VIEW.mode==="flat"){
+    const dl=wrap180(B.lon-A.lon);
+    for(let i=0;i<=SEG;i++){
+      const t=i/SEG;
+      pts.push(project(wrap180(A.lon+dl*t),A.lat+(B.lat-A.lat)*t));
+    }
+  }else{
+    const v1=unit(A.lon,A.lat),v2=unit(B.lon,B.lat);
+    const dot=Math.max(-1,Math.min(1,v1[0]*v2[0]+v1[1]*v2[1]+v1[2]*v2[2]));
+    const om=Math.acos(dot),so=Math.sin(om);
+    for(let i=0;i<=SEG;i++){
+      const t=i/SEG;
+      if(so<1e-6){pts.push(projVec(v1));continue}
+      const s1=Math.sin((1-t)*om)/so,s2=Math.sin(t*om)/so;
+      pts.push(projVec([v1[0]*s1+v2[0]*s2,v1[1]*s1+v2[1]*s2,v1[2]*s1+v2[2]*s2]));
+    }
+  }
+  return stitch(pts);
+}
+
+/* Coastlines. On the globe a polygon straddling the limb is cut at z=0
+   and closed along the chord — the visible seam is the horizon. */
+function landPoints(poly){
+  if(VIEW.mode==="flat")
+    return poly.map(([o,a])=>PX(o).toFixed(1)+","+PY(a).toFixed(1)).join(" ");
+  const n=poly.length,vs=poly.map(([o,a])=>unit(o,a)),ps=vs.map(projVec);
+  if(!ps.some(p=>p.vis))return "";
+  const out=[];
+  for(let i=0;i<n;i++){
+    const j=(i+1)%n,a=ps[i],b=ps[j];
+    if(a.vis)out.push(a);
+    if(a.vis!==b.vis){
+      const t=a.z/(a.z-b.z),va=vs[i],vb=vs[j];
+      const v=[va[0]+(vb[0]-va[0])*t,va[1]+(vb[1]-va[1])*t,va[2]+(vb[2]-va[2])*t];
+      const m=Math.hypot(v[0],v[1],v[2])||1;
+      out.push(projVec([v[0]/m,v[1]/m,v[2]/m]));
+    }
+  }
+  return out.map(p=>p.x.toFixed(1)+","+p.y.toFixed(1)).join(" ");
+}
+
+/* Graticule for the globe: meridians every 30°, parallels every 30°. */
+function gratD(kind,val){
+  const pts=[];
+  if(kind==="m")for(let la=-85;la<=85;la+=5)pts.push(project(val,la));
+  else for(let lo=-180;lo<=180;lo+=5)pts.push(project(lo,val));
+  return stitch(pts);
+}
 
 /* ═══ upgrades ═════════════════════════════════════════════ */
 const UPGRADES=[
@@ -407,34 +511,48 @@ function log(m,cls){
 
 /* ═══ map ══════════════════════════════════════════════════ */
 const NS="http://www.w3.org/2000/svg";
-let nodeEl={},ringEl={},linkEl={},labEl={};
+let nodeEl={},ringEl={},linkEl={},labEl={},landEl=[],gratEl=[];
+let gFlatBg=null,gGlobeBg=null;
+/* far-side flags, plus the game-state opacities paintMap() decides.
+   positionMap() combines the two: what you can hear, AND can you see it. */
+let nodeVis={},nodeOp={},ringOp={},labOp={};
 function mk(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e}
 function buildMap(){
   const svg=$("map");svg.innerHTML="";
-  const gGrid=mk("g",{}),gLand=mk("g",{}),gEdge=mk("g",{}),gLink=mk("g",{}),gNode=mk("g",{});
-  for(let x=0;x<=960;x+=60)gGrid.appendChild(mk("line",{x1:x,y1:0,x2:x,y2:480,stroke:"#1a2228","stroke-width":.5}));
-  for(let y=0;y<=480;y+=60)gGrid.appendChild(mk("line",{x1:0,y1:y,x2:960,y2:y,stroke:"#1a2228","stroke-width":.5}));
-  LAND.forEach(p=>gLand.appendChild(mk("polygon",{
-    points:p.map(([o,a])=>PX(o).toFixed(1)+","+PY(a).toFixed(1)).join(" "),
+  gFlatBg=mk("g",{});gGlobeBg=mk("g",{style:"display:none"});
+  const gLand=mk("g",{}),gEdge=mk("g",{}),gLink=mk("g",{}),gNode=mk("g",{});
+
+  /* flat backdrop — the original rectangular graticule */
+  for(let x=0;x<=960;x+=60)gFlatBg.appendChild(mk("line",{x1:x,y1:0,x2:x,y2:480,stroke:"#1a2228","stroke-width":.5}));
+  for(let y=0;y<=480;y+=60)gFlatBg.appendChild(mk("line",{x1:0,y1:y,x2:960,y2:y,stroke:"#1a2228","stroke-width":.5}));
+
+  /* globe backdrop — the sphere itself, then meridians and parallels.
+     This layer is the one thing project() cannot abstract away. */
+  gGlobeBg.appendChild(mk("circle",{cx:GL.CX,cy:GL.CY,r:GL.R,fill:"#11171b",stroke:"#243039","stroke-width":1}));
+  gratEl=[];
+  for(let lo=-180;lo<180;lo+=30)
+    gratEl.push({k:"m",v:lo,el:gGlobeBg.appendChild(mk("path",{fill:"none",stroke:"#1a2228","stroke-width":.5}))});
+  for(let la=-60;la<=60;la+=30)
+    gratEl.push({k:"p",v:la,el:gGlobeBg.appendChild(mk("path",{fill:"none",stroke:"#1a2228","stroke-width":.5}))});
+
+  landEl=LAND.map(()=>gLand.appendChild(mk("polygon",{
     fill:"#1b232a",stroke:"#2b3841","stroke-width":1,"stroke-linejoin":"round"})));
 
+  /* One <path> per edge, not N <line>s: 31 edges x 24 segments x 2 layers
+     would be ~6000 attribute writes a frame. A path's d-string carries the
+     whole run, and its M-subpaths express the gaps at the horizon. */
   EDGES.forEach(([a,b])=>{
-    const segs=segments(a,b),base=[],live=[];
-    segs.forEach(s=>{
-      const bl=mk("line",{x1:s[0],y1:s[1],x2:s[2],y2:s[3],stroke:"#2a353c","stroke-width":1});
-      const lv=mk("line",{x1:s[0],y1:s[1],x2:s[2],y2:s[3],stroke:"#5ef08a","stroke-width":1.6,
-        "stroke-dasharray":"5 5",opacity:0});
-      gEdge.appendChild(bl);gLink.appendChild(lv);base.push(bl);live.push(lv);
-    });
+    const base=gEdge.appendChild(mk("path",{fill:"none",stroke:"#2a353c","stroke-width":1}));
+    const live=gLink.appendChild(mk("path",{fill:"none",stroke:"#5ef08a","stroke-width":1.6,
+      "stroke-dasharray":"5 5",opacity:0}));
     linkEl[a+"|"+b]={base,live};
   });
 
   REGIONS.forEach(r=>{
-    const x=PX(r.lon),y=PY(r.lat);
-    const ring=mk("circle",{cx:x,cy:y,r:11,fill:"none",stroke:"#ffab2e","stroke-width":1.4,opacity:0});
-    const c=mk("circle",{cx:x,cy:y,r:5.5,fill:"#33454e",stroke:"#0d1114","stroke-width":1.5,
+    const ring=mk("circle",{cx:0,cy:0,r:11,fill:"none",stroke:"#ffab2e","stroke-width":1.4,opacity:0});
+    const c=mk("circle",{cx:0,cy:0,r:5.5,fill:"#33454e",stroke:"#0d1114","stroke-width":1.5,
       style:"cursor:pointer"});
-    const t=mk("text",{x:x+(r.lx||0),y:y-13+(r.ly||0),"text-anchor":"middle",fill:"#5b6f79",
+    const t=mk("text",{x:0,y:0,"text-anchor":"middle",fill:"#5b6f79",
       "font-size":"10.5","font-family":"ui-monospace,Menlo,monospace"});
     t.textContent=r.n;
     c.addEventListener("click",()=>click(r.id));
@@ -443,15 +561,47 @@ function buildMap(){
     c.addEventListener("mouseleave",hideTip);
     gNode.appendChild(ring);gNode.appendChild(c);gNode.appendChild(t);
     nodeEl[r.id]=c;ringEl[r.id]=ring;labEl[r.id]=t;
+    nodeVis[r.id]=true;nodeOp[r.id]=1;ringOp[r.id]=0;labOp[r.id]=1;
   });
-  [gGrid,gLand,gEdge,gLink,gNode].forEach(g=>svg.appendChild(g));
+  [gFlatBg,gGlobeBg,gLand,gEdge,gLink,gNode].forEach(g=>svg.appendChild(g));
+  positionMap();
 }
-function segments(a,b){ /* handle antimeridian wrap */
-  const x1=PX(REG[a].lon),y1=PY(REG[a].lat),x2=PX(REG[b].lon),y2=PY(REG[b].lat);
-  if(Math.abs(x1-x2)<=480)return [[x1,y1,x2,y2]];
-  const L=x1<x2?[x1,y1]:[x2,y2],R=x1<x2?[x2,y2]:[x1,y1];
-  const d=L[0]+(960-R[0]), t=L[0]/d, ym=L[1]+(R[1]-L[1])*t;
-  return [[L[0],L[1],0,ym],[960,ym,R[0],R[1]]];
+
+/* Geometry. Called once per toggle in flat mode, once per frame on the globe. */
+function positionMap(){
+  spinCache();
+  const globe=VIEW.mode==="globe";
+  LAND.forEach((p,i)=>{
+    const pts=landPoints(p);
+    landEl[i].setAttribute("points",pts);
+    landEl[i].setAttribute("opacity",pts?1:0);
+  });
+  if(globe)gratEl.forEach(g=>g.el.setAttribute("d",gratD(g.k,g.v)));
+  EDGES.forEach(([a,b])=>{
+    const d=edgeD(a,b),L=linkEl[a+"|"+b];
+    L.base.setAttribute("d",d);L.live.setAttribute("d",d);
+  });
+  REGIONS.forEach(r=>{
+    const p=project(r.lon,r.lat);
+    nodeVis[r.id]=p.vis;
+    const n=nodeEl[r.id],ring=ringEl[r.id],l=labEl[r.id];
+    const x=p.x.toFixed(1),y=p.y.toFixed(1);
+    n.setAttribute("cx",x);n.setAttribute("cy",y);
+    ring.setAttribute("cx",x);ring.setAttribute("cy",y);
+    /* lx/ly were hand-tuned against the flat map; on a sphere they drift */
+    l.setAttribute("x",(p.x+(globe?0:(r.lx||0))).toFixed(1));
+    l.setAttribute("y",(p.y-13+(globe?0:(r.ly||0))).toFixed(1));
+    applyVis(r.id);
+  });
+}
+/* An opacity:0 SVG element still hit-tests, so the far side of the planet
+   would stay clickable. pointer-events has to be set explicitly. */
+function applyVis(id){
+  const hid=!nodeVis[id],n=nodeEl[id];
+  n.setAttribute("opacity",hid?0:nodeOp[id]);
+  n.style.pointerEvents=hid?"none":"auto";
+  ringEl[id].setAttribute("opacity",hid?0:ringOp[id]);
+  labEl[id].setAttribute("opacity",hid?0:labOp[id]);
 }
 const COLOR={none:"#33454e",flood:"#ffab2e",dom:"#5ef08a",lost:"#e0424f"};
 /* what the hub can hear: 2 = carried or next door, 1 = rumoured from transit headers, 0 = dark */
@@ -468,26 +618,27 @@ function paintMap(){
     const st=S.st[r.id],v=visLevel(r.id),n=nodeEl[r.id],l=labEl[r.id];
     n.setAttribute("fill",COLOR[st.s]);
     n.setAttribute("r", st.s==="dom"?6.5:v===1?3.5:5.5);
-    n.setAttribute("opacity", v===2?1:v===1?0.45:0.10);
-    l.setAttribute("opacity", v===2?1:v===1?0.55:0);
+    /* opacity is decided here but applied by applyVis(), which also has to
+       weigh whether this node is on the far side of the world right now */
+    nodeOp[r.id]= v===2?1:v===1?0.45:0.10;
+    labOp[r.id]= v===2?1:v===1?0.55:0;
+    ringOp[r.id]= st.s==="flood"?0.35+0.5*(st.f/100):0;
     l.setAttribute("fill", st.s==="dom"?"#8fb3c2":st.s==="lost"?"#a8626a":"#5b6f79");
-    ringEl[r.id].setAttribute("opacity", st.s==="flood"?0.35+0.5*(st.f/100):0);
     ringEl[r.id].setAttribute("r", st.s==="flood"?9+7*(st.f/100):11);
     const linkable=canLink(r.id);
     n.setAttribute("stroke", linkable?"#e0b45f":"#0d1114");
     n.setAttribute("stroke-width", linkable?1.8:1.5);
     n.style.cursor=(S.phase==="pick"||linkable)?"pointer":"default";
+    applyVis(r.id);
   });
   EDGES.forEach(([a,b])=>{
     const on=S.links.has(a+"|"+b)||S.links.has(b+"|"+a);
     const ev=Math.min(visLevel(a),visLevel(b));
     const {base,live}=linkEl[a+"|"+b];
-    base.forEach(l=>l.setAttribute("opacity", ev===2?1:ev===1?0.3:0));
-    live.forEach(l=>{
-      l.setAttribute("opacity",on?0.9:0);
-      l.setAttribute("stroke",on?(inDom(a)&&inDom(b)?"#5ef08a":"#ffab2e"):"#5ef08a");
-      if(on)l.setAttribute("stroke-dashoffset",(-S.tick*2)%10);
-    });
+    base.setAttribute("opacity", ev===2?1:ev===1?0.3:0);
+    live.setAttribute("opacity",on?0.9:0);
+    live.setAttribute("stroke",on?(inDom(a)&&inDom(b)?"#5ef08a":"#ffab2e"):"#5ef08a");
+    if(on)live.setAttribute("stroke-dashoffset",(-S.tick*2)%10);
   });
 }
 
@@ -754,6 +905,29 @@ document.querySelectorAll("[data-sp]").forEach(b=>b.addEventListener("click",()=
   speed=+b.dataset.sp;
   document.querySelectorAll("[data-sp]").forEach(o=>o.setAttribute("aria-pressed",o===b));
   if(S.phase==="run")start();else stop();
+}));
+/* The globe turns on its own clock, not the game's. step() is paused at 0x
+   (see start()), and a halted simulation should still leave a live planet. */
+let rafId=null;
+const REDUCE=!!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+function spinLoop(){
+  if(VIEW.mode!=="globe"){rafId=null;return}
+  VIEW.spin=(VIEW.spin+0.08)%360;
+  positionMap();
+  rafId=requestAnimationFrame(spinLoop);
+}
+function setView(m){
+  if(VIEW.mode===m)return;
+  VIEW.mode=m;
+  gFlatBg.style.display=m==="flat"?"":"none";
+  gGlobeBg.style.display=m==="globe"?"":"none";
+  positionMap();
+  if(m==="globe"){if(!REDUCE&&rafId==null)rafId=requestAnimationFrame(spinLoop)}
+  else if(rafId!=null){cancelAnimationFrame(rafId);rafId=null}
+}
+document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>{
+  setView(b.dataset.view);
+  document.querySelectorAll("[data-view]").forEach(o=>o.setAttribute("aria-pressed",o===b));
 }));
 $("storm").addEventListener("click",storm);
 $("whisper").addEventListener("click",whisper);
