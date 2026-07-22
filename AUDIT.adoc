@@ -80,6 +80,28 @@ claimed about 688 Attack Hub in particular.
 * That the countermeasure escalation (`CMS`) and upgrade balance produce a
   "fun" or "balanced" experience. This is a design/taste judgement, not
   something this repo tries to prove.
+* That the orthographic globe projection is *cartographically* correct. What
+  was actually done is narrower, and is recorded here rather than overstated:
+  the projection was exercised in a real browser and four specific properties
+  were measured — trans-Pacific edges emit two path subpaths at opposite
+  screen edges (so no backbone run is drawn the long way across Eurasia);
+  every far-side node reports `pointer-events: none` and `elementFromPoint`
+  at its coordinates returns the land polygon rather than the node; one
+  geometry pass costs 0.34 ms against a 16.7 ms frame budget; and the page
+  loads with no console errors. Those four are evidence. "The globe is
+  correct" is not a claim this repo makes, and there is no automated visual
+  or regression test for any of it — the checks above were run once, by hand.
+* A coastline polygon straddling the limb is closed along the chord between
+  its horizon crossings rather than along the limb arc. This is a known and
+  deliberate imperfection, visible at the edge of the disc; see
+  `ARCHITECTURE.md`.
+* That the globe *rotates*. The geometry was swept numerically through a full
+  turn (72 angles, 5 degrees apart, zero faults) and the rotation loop's body
+  was driven by hand, but the `requestAnimationFrame` scheduler was never
+  observed firing: the test browser sets `prefers-reduced-motion`, which this
+  code honours by not scheduling it, and the automated tab was backgrounded,
+  where rAF does not fire at all. The loop is three lines of ordinary rAF
+  recursion and was read, not run. See `AFFIRMATION.adoc`.
 
 === Explicitly NOT claimed
 
@@ -92,8 +114,19 @@ claimed about 688 Attack Hub in particular.
 * **No accessibility audit.** The game has not been tested against WCAG
   criteria. If that matters to you, treat it as unaudited until someone
   actually runs one.
-* **No performance/load claims.** The `step()` tick loop has not been
-  profiled or stress-tested at any scale beyond normal play.
+* **No performance/load claims.** One number exists — `positionMap()` costs
+  0.34 ms per pass, measured once in one browser — and it is not a claim
+  about anything else. The `step()` tick loop has never been profiled, no
+  stress test exists at any scale beyond normal play, and nothing has been
+  measured on a low-end device or a browser other than the one used.
+* **No static analysis of the game itself.** CodeQL default setup is enabled
+  and green, but it scans the `actions` language only: the two workflow
+  files. It cannot reach the game's ~700 lines of inline JavaScript, because
+  the repository detects as 100% HTML and CodeQL has no HTML extractor that
+  would descend into a `<script>` block. Splitting the JS into a separate
+  `.js` file would make it analysable, at the cost of the single-file
+  property the rest of this repo is built around. That trade has not been
+  made. Treat the game's JavaScript as unanalysed by any tool.
 * **No security hardening claims beyond "makes no network calls."** See
   `SECURITY.md` for the deliberately small threat model this repo actually
   considers in scope.

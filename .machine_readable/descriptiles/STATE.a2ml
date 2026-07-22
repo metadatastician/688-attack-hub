@@ -27,7 +27,9 @@ maturity = "beta"          # experimental | alpha | beta | production | lts
 milestones = [
   { name = "Import game + full RSR documentation set", completion = 100 },
   { name = "ci.yml (integrity checks) + pages.yml (GitHub Pages deploy)", completion = 100 },
-  { name = "Roadmap: Globe.gl 3D map (not started)", completion = 0 },
+  { name = "Orthographic globe view behind a flat/globe toggle", completion = 100 },
+  { name = "Roadmap: globe polish (drag-to-rotate, tilt, glow) — not started", completion = 0 },
+  { name = "Roadmap: PAN/LAN/MAN/WAN scale ladder — design only, not started", completion = 0 },
   { name = "Roadmap: engine migration to Bevy/Fyrox, if ever pursued (not started)", completion = 0 },
 ]
 

@@ -106,6 +106,75 @@ The Globe.gl / engine-migration roadmap in `ARCHITECTURE.md` is aspiration,
 not work in progress.:: Neither has been started. Treat that section as
 options under consideration, not a commitment.
 
+== Addendum — the orthographic globe
+
+Anchored separately because it is *not* on `main` at the time of writing: it
+lives on branch `feat/orthographic-globe`, commit `78b520b`, as an open draft
+pull request. The affirmation above still describes the initial import
+accurately; this section describes only what was added on that branch, and
+should be folded into the anchor above if and when it merges.
+
+What was measured, in a real browser (Chrome, one machine, one session),
+against the running game rather than the source:
+
+* Trans-Pacific backbone runs (`sea|nrt`, `sjc|nrt`, `sjc|syd`) each emit
+  *two* path subpaths, at x≈1 and x≈951 — that is, they leave one edge of
+  the map and re-enter the other. Short runs (`lhr|ams`) and trans-Atlantic
+  runs (`iad|lhr`) emit one. This is the specific check that catches a
+  longitude lerp drawing the Pacific cable across Eurasia while leaving both
+  endpoints correct.
+* Of 20 regions, the 6 then on the far side all reported
+  `pointer-events: none`, and none of the 14 near-side ones did.
+  `document.elementFromPoint()` at a hidden node's own coordinates returned
+  the land polygon, not the node — you cannot click through the planet.
+* One `positionMap()` pass cost 0.34 ms against a 16.7 ms frame budget,
+  across 181 SVG elements.
+* The page loaded and ran with no console errors, and the file still contains
+  no `fetch(`, `XMLHttpRequest`, `WebSocket`, `eval(` or `new Function(`.
+* Both projections were seen rendering: the flat map at game start, and the
+  globe with great-circle arcs, limb-clipped coastlines, and a working
+  tooltip — at two different rotations (0°, Europe-facing; and 195°,
+  Pacific-facing).
+* The geometry was swept numerically through a full rotation — 72 angles, one
+  every 5° — checking at each for non-finite coordinates in nodes, edge paths
+  and coastline polygons; for any visible node or arc point falling outside
+  the disc; and for any far-side node that still hit-tests. **Zero problems at
+  any angle.** Visible-node count stayed between 5 and 15 of 20 throughout,
+  which is the right shape for a sphere: never none, never all.
+* The rotation loop's *body* was exercised directly: 50 iterations advanced
+  `VIEW.spin` and moved a node's `cx` from 362.6 to 368.1.
+
+=== What was NOT observed, and why
+
+The `requestAnimationFrame` loop was never seen firing on its own.
+
+Two independent reasons, both discovered rather than assumed: the test browser
+has `prefers-reduced-motion: reduce` set, which this code deliberately honours
+by not scheduling the loop at all; and the automated tab reported
+`document.visibilityState === "hidden"`, where browsers do not fire
+`requestAnimationFrame` regardless. A direct probe confirmed rAF does not fire
+in that tab at all.
+
+So the claim "the planet keeps turning while the game clock is halted" rests on
+the loop body working (measured) plus the scheduler being three lines of
+ordinary `requestAnimationFrame` recursion (read, not run). It has not been
+watched spinning. That is a weaker statement than the commit message and pull
+request originally implied, and it is the honest one.
+
+What this addendum does *not* affirm:
+
+Correctness of the projection.:: Four properties were measured. That is not
+the same as the globe being cartographically right, and there is no automated
+test for any of it — every check above was run once, by hand, and would not
+catch a regression.
+
+Anything about other browsers or devices.:: One browser, one machine. No
+mobile, no low-end hardware, no cross-browser pass.
+
+That the coastline limb seam is correct.:: It is knowingly wrong — polygons
+straddling the horizon close along a chord, not the limb arc. See
+`ARCHITECTURE.md`.
+
 == How to falsify this file
 
 [source,console]

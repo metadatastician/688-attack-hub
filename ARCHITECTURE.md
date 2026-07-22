@@ -57,25 +57,97 @@ input paths — install/link a region, or purchase an upgrade. `over(win)`
 ends the run (loss at 100% attention; no explicit win condition beyond
 "keep going").
 
+## Projection: flat and globe
+
+The map data was always spherical — `REGIONS` carry real longitude/latitude
+and `LAND` is lon/lat polygons — so the flat plate-carrée projection was the
+only thing standing between it and a globe. There are now two projections of
+the same data, switched by the **FLAT / GLOBE** control in the footer. Flat
+remains the default.
+
+**`project(lon, lat)` is the seam.** It returns `{x, y, vis, z}`, and every
+call site goes through it. Gameplay — `click()`, `buy()`, `step()`,
+`canLink()`, `visLevel()` — never learns which projection is active. Only the
+backdrop layer branches on mode, because a rectangular graticule and a sphere
+have nothing in common; both layer groups are built once and toggled with
+`display`.
+
+**Geometry moved out of `buildMap()` into `positionMap()`.** `buildMap()`
+originally created every SVG element once and `paintMap()` only ever mutated
+appearance (fill, radius, opacity) — correct for a fixed map, useless for a
+turning one. `paintMap()` still owns appearance; `positionMap()` owns
+coordinates. Where the two overlap — a node's opacity depends both on what the
+hub can overhear *and* on whether that node is currently on the far side of the
+world — `paintMap()` records its decision and `applyVis()` combines the two.
+
+**Rotation runs on `requestAnimationFrame`, not `step()`.** `step()` is the
+game tick and is paused at 0× (see `start()`); a halted simulation should still
+leave a live planet. `prefers-reduced-motion` suppresses the spin entirely
+rather than merely slowing it.
+
+**One `<path>` per edge, not one `<line>` per segment.** Each backbone run is
+subdivided into `SEG = 24` pieces. As separate `<line>` elements that would be
+31 edges × 24 segments × 2 layers × 4 coordinates ≈ 6,000 `setAttribute` calls
+per frame; as a single `d` string it is 62. A path also solves horizon clipping
+for free, because multiple `M` subpaths express gaps that a `<polyline>`
+cannot. Measured in-browser: **0.34 ms** per geometry pass against a 16.7 ms
+frame budget, across 181 SVG elements.
+
+### Two traps, both of which look correct at a glance
+
+- **Flat mode must interpolate along the shorter longitude delta.** Lerping raw
+  longitudes sends Seattle→Tokyo (−122.3 → +139.7) the long way round, drawing
+  the trans-Pacific cable straight across Eurasia — with both endpoints still
+  in exactly the right place. `wrap180()` normalises the delta before
+  subdividing, and the single sub-segment straddling ±180 is dropped. Globe
+  mode slerps, which takes the shorter great circle for free.
+- **An `opacity: 0` SVG element still hit-tests.** Without an explicit
+  `pointer-events: none`, the far side of the planet stays clickable and you
+  can select a city through the Earth.
+
+### Known imperfections
+
+**Coastlines at the limb.** A polygon straddling the horizon is cut at `z = 0`
+and closed along the **chord** between its two crossings, not along the limb
+arc. The seam is visible on close inspection at the edge of the disc. Fixing it
+means walking the limb circle between crossings, which needs an unambiguous
+winding direction; judged not worth the complexity for an MVP.
+
+**Reduced motion strands the globe — and this is an accessibility problem, not
+a cosmetic one.** `prefers-reduced-motion: reduce` suppresses the spin
+entirely, which is the correct response to that media query. But there is no
+drag-to-rotate yet, so a reduced-motion user who selects GLOBE gets a planet
+frozen at 0° with roughly half the world permanently behind it and no way to
+bring it round. The flat map remains the default and shows everything, so
+nothing is unreachable in the game as a whole — but the globe on its own is
+not usable for those users.
+
+This moves **drag-to-rotate out of "polish" and into "accessibility"**. It is
+listed under Roadmap below with the other polish items; it should not be
+treated as equivalent to them.
+
 ## Roadmap (not implemented — ideas only)
 
-Two different directions have been discussed for "the next generation" of
-this game; neither has started, and they are not the same kind of change:
+- **Drag-to-rotate.** Listed here for sequencing, but see Known imperfections
+  above: without it the globe is unusable under `prefers-reduced-motion`. This
+  is the highest-priority item in this list. Not started.
+- **Globe polish.** Pole tilt (the current maths is yaw-only, deliberately),
+  atmosphere glow, star field. None started.
+- **PAN→LAN→MAN→WAN scale ladder.** The globe is the WAN rung; zooming into a
+  region would open its metro fabric, and into that, a rack. Free movement up
+  and down one continuous game with a single shared clock. Design only — see
+  [`docs/design/2026-07-22-scale-ladder-and-opponents.md`](./docs/design/2026-07-22-scale-ladder-and-opponents.md).
+- **Engine migration (Bevy/Fyrox).** Moving off the browser architecture
+  entirely onto a Rust engine with a Cargo→WASM pipeline and an ECS design.
+  This is a rewrite, not an upgrade, and would give up the zero-install
+  property. Not committed, not started.
 
-- **3D globe view (Globe.gl).** Replace the flat-projection SVG map with a
-  rotating 3D globe showing nodes/arcs, visually similar to Hurricane
-  Electric's [3D network map](https://www.he.net/3d-map/) (which is HE's own
-  proprietary in-house tool — no public library or API behind it, confirmed
-  by inspection; nothing to depend on directly). [Globe.gl](https://github.com/vasturiano/globe.gl)
-  (a Three.js wrapper, MIT-licensed) is the closest open equivalent and could
-  be dropped in via a CDN `<script>` tag without breaking the "one
-  self-contained file, no build" property this repo currently has.
-- **Engine migration (Bevy/Fyrox).** A much bigger change: moving off the
-  browser-canvas architecture entirely onto a Rust game engine with a
-  Cargo→WASM build pipeline and a different (ECS-based) architecture. This
-  would be the right call only if the game grows into an actual 3D/simulation
-  title rather than staying a browser idle-toy — it is a rewrite, not an
-  upgrade, and would give up the current zero-install property.
-
-Neither direction is committed. Whichever is chosen, update this section and
-`CHANGELOG.md` before starting.
+Note for anyone revisiting the 3D question: Hurricane Electric's
+[3D network map](https://www.he.net/3d-map/) is HE's own proprietary in-house
+tool — no public library or API behind it, confirmed by inspection — so there
+was never anything to depend on directly. An earlier draft of this file claimed
+[Globe.gl](https://github.com/vasturiano/globe.gl) could be "dropped in via a
+CDN `<script>` tag without breaking the self-contained property"; **that was
+wrong**, because a CDN tag is a network call and `ci.yml` fails the build on
+one. Vendoring Three.js inline would have meant ~600 KB into a 39 KB file. The
+hand-rolled orthographic projection was chosen precisely to avoid both.

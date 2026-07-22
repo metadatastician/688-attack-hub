@@ -46,6 +46,15 @@ to navigate — everything is in `688-attack-hub.html`.
   `f19-stealth-glider`'s proven pattern. (Neither of this estate's own SSGs,
   `ddraig-ssg` or `casket-ssg`, applies here: both render Markdown, and this
   artefact has none to render.)
+- **The globe is hand-rolled on purpose. Do not introduce a 3D library.**
+  The orthographic projection in `688-attack-hub.html` is about 90 lines of
+  trigonometry precisely so that the two rules above stay true. Three.js or
+  Globe.gl would have to be either fetched from a CDN (a network call — the
+  build fails) or vendored inline (~600 KB into a 46 KB file, destroying the
+  self-contained property that makes this repo auditable). If the globe needs
+  to do more, extend the maths. `ARCHITECTURE.md` records why, including a
+  correction to an earlier draft of that file which wrongly suggested a CDN
+  `<script>` tag would be acceptable.
 - **Do not invent a verification ledger.** This repo has no
   `VERIFICATION.md` and no `src/verify*.mjs` scripts, unlike
   `f19-stealth-glider`. That is a deliberate choice recorded in
