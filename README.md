@@ -45,6 +45,11 @@ map and the default; globe is a rotating orthographic projection of the same
 data, hand-rolled in SVG with no 3D library. Both are the same game — the
 projection is the only thing that changes.
 
+In globe view you can **drag to rotate**, or use the **left/right arrow keys**
+(hold Shift for a bigger step). The globe also turns on its own, unless your
+system asks for reduced motion — in which case it stays still and the drag and
+key controls are how you reach the far side.
+
 ## Documentation
 
 | Document | What it answers |

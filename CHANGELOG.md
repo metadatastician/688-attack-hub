@@ -20,6 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   slerp, back-face culling, horizon clipping, and a rotation that runs on
   `requestAnimationFrame` so the planet stays live while the game clock is
   halted. Honours `prefers-reduced-motion`.
+- **Drag and keyboard rotation for the globe.** Drag with mouse, touch or pen;
+  or use the left/right arrow keys (5°, or 15° with Shift) — the map is
+  keyboard-focusable and labelled. Both drive the projection directly rather
+  than through the animation loop, so they work when auto-rotation is
+  suppressed by `prefers-reduced-motion`. Without them, a reduced-motion user
+  selecting GLOBE got a planet frozen at 0° with half the world unreachable,
+  which was an accessibility fault rather than missing polish.
 
 ### Fixed
 
@@ -37,7 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Roadmap (not started)
 
-- Globe polish: drag-to-rotate, pole tilt, atmosphere glow, star field.
+- Globe polish: pole tilt (the maths is yaw-only, so the poles cannot yet be
+  brought into view), atmosphere glow, star field.
 - PAN→LAN→MAN→WAN scale ladder, with the globe as the WAN rung — design only.
 - Possible engine migration (Bevy/Fyrox) if the game grows beyond a browser
   idle-toy — see `ARCHITECTURE.md`. A rewrite, not an upgrade; not committed.
