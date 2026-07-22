@@ -120,7 +120,7 @@ direction; it was judged not worth the complexity for an MVP.
 - **PAN→LAN→MAN→WAN scale ladder.** The globe is the WAN rung; zooming into a
   region would open its metro fabric, and into that, a rack. Free movement up
   and down one continuous game with a single shared clock. Design only — see
-  `docs/design/` once written.
+  [`docs/design/2026-07-22-scale-ladder-and-opponents.md`](./docs/design/2026-07-22-scale-ladder-and-opponents.md).
 - **Engine migration (Bevy/Fyrox).** Moving off the browser architecture
   entirely onto a Rust engine with a Cargo→WASM pipeline and an ECS design.
   This is a rewrite, not an upgrade, and would give up the zero-install
