@@ -95,13 +95,21 @@ claimed about 688 Attack Hub in particular.
   its horizon crossings rather than along the limb arc. This is a known and
   deliberate imperfection, visible at the edge of the disc; see
   `ARCHITECTURE.md`.
-* That the globe *rotates*. The geometry was swept numerically through a full
-  turn (72 angles, 5 degrees apart, zero faults) and the rotation loop's body
-  was driven by hand, but the `requestAnimationFrame` scheduler was never
+* That the globe *auto*-rotates. The geometry was swept numerically through a
+  full turn (72 angles, 5 degrees apart, zero faults) and the loop's body was
+  driven by hand, but the `requestAnimationFrame` scheduler itself was never
   observed firing: the test browser sets `prefers-reduced-motion`, which this
   code honours by not scheduling it, and the automated tab was backgrounded,
-  where rAF does not fire at all. The loop is three lines of ordinary rAF
-  recursion and was read, not run. See `AFFIRMATION.adoc`.
+  where rAF does not fire at all. Those three lines of rAF recursion were
+  read, not run.
++
+The *manual* controls, by contrast, were exercised: a synthetic 90px drag
+moved the globe, arrow keys stepped it 5 degrees (15 with Shift), and the
+drag-versus-click guard was tested in all three states — a plain click on a
+city registers, the click delivered after a drag is suppressed, and clicking
+works again once the guard clears. Both were confirmed working with
+`prefers-reduced-motion` active and no animation loop running, which is the
+case that matters. See `AFFIRMATION.adoc`.
 
 === Explicitly NOT claimed
 

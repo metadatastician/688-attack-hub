@@ -144,6 +144,23 @@ against the running game rather than the source:
 * The rotation loop's *body* was exercised directly: 50 iterations advanced
   `VIEW.spin` and moved a node's `cx` from 362.6 to 368.1.
 
+=== The manual rotation controls (drag, arrow keys)
+
+Added after the above, and exercised rather than assumed — with
+`prefers-reduced-motion` active and **no animation loop running**, which is
+precisely the configuration they exist to rescue:
+
+* A synthetic 90–120 px pointer drag moved the globe, in the direction that
+  makes the surface follow the finger.
+* `ArrowRight` stepped +5°; `Shift`+`ArrowLeft` stepped −15°. The `<svg>`
+  reports `tabIndex = 0`, so it is keyboard-reachable at all.
+* The drag-versus-click guard was tested in all three states, because getting
+  it wrong would silently install a hub wherever a drag happened to end: a
+  plain click on a city registers; the click the browser delivers after a drag
+  is suppressed; and clicking works again once the guard clears.
+* The full 72-angle geometry sweep was re-run after these changes — still zero
+  faults, still 5–15 of 20 nodes visible throughout.
+
 === What was NOT observed, and why
 
 The `requestAnimationFrame` loop was never seen firing on its own.
