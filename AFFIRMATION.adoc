@@ -132,8 +132,34 @@ against the running game rather than the source:
 * The page loaded and ran with no console errors, and the file still contains
   no `fetch(`, `XMLHttpRequest`, `WebSocket`, `eval(` or `new Function(`.
 * Both projections were seen rendering: the flat map at game start, and the
-  globe mid-run with great-circle arcs, limb-clipped coastlines, and a
-  working tooltip.
+  globe with great-circle arcs, limb-clipped coastlines, and a working
+  tooltip — at two different rotations (0°, Europe-facing; and 195°,
+  Pacific-facing).
+* The geometry was swept numerically through a full rotation — 72 angles, one
+  every 5° — checking at each for non-finite coordinates in nodes, edge paths
+  and coastline polygons; for any visible node or arc point falling outside
+  the disc; and for any far-side node that still hit-tests. **Zero problems at
+  any angle.** Visible-node count stayed between 5 and 15 of 20 throughout,
+  which is the right shape for a sphere: never none, never all.
+* The rotation loop's *body* was exercised directly: 50 iterations advanced
+  `VIEW.spin` and moved a node's `cx` from 362.6 to 368.1.
+
+=== What was NOT observed, and why
+
+The `requestAnimationFrame` loop was never seen firing on its own.
+
+Two independent reasons, both discovered rather than assumed: the test browser
+has `prefers-reduced-motion: reduce` set, which this code deliberately honours
+by not scheduling the loop at all; and the automated tab reported
+`document.visibilityState === "hidden"`, where browsers do not fire
+`requestAnimationFrame` regardless. A direct probe confirmed rAF does not fire
+in that tab at all.
+
+So the claim "the planet keeps turning while the game clock is halted" rests on
+the loop body working (measured) plus the scheduler being three lines of
+ordinary `requestAnimationFrame` recursion (read, not run). It has not been
+watched spinning. That is a weaker statement than the commit message and pull
+request originally implied, and it is the honest one.
 
 What this addendum does *not* affirm:
 

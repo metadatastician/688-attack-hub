@@ -105,18 +105,34 @@ frame budget, across 181 SVG elements.
   `pointer-events: none`, the far side of the planet stays clickable and you
   can select a city through the Earth.
 
-### Known imperfection
+### Known imperfections
 
-A coastline polygon straddling the limb is cut at `z = 0` and closed along the
-**chord** between its two horizon crossings, not along the limb arc. The seam
-is visible on close inspection at the edge of the disc. Fixing it means walking
-the limb circle between crossings, which needs an unambiguous winding
-direction; it was judged not worth the complexity for an MVP.
+**Coastlines at the limb.** A polygon straddling the horizon is cut at `z = 0`
+and closed along the **chord** between its two crossings, not along the limb
+arc. The seam is visible on close inspection at the edge of the disc. Fixing it
+means walking the limb circle between crossings, which needs an unambiguous
+winding direction; judged not worth the complexity for an MVP.
+
+**Reduced motion strands the globe — and this is an accessibility problem, not
+a cosmetic one.** `prefers-reduced-motion: reduce` suppresses the spin
+entirely, which is the correct response to that media query. But there is no
+drag-to-rotate yet, so a reduced-motion user who selects GLOBE gets a planet
+frozen at 0° with roughly half the world permanently behind it and no way to
+bring it round. The flat map remains the default and shows everything, so
+nothing is unreachable in the game as a whole — but the globe on its own is
+not usable for those users.
+
+This moves **drag-to-rotate out of "polish" and into "accessibility"**. It is
+listed under Roadmap below with the other polish items; it should not be
+treated as equivalent to them.
 
 ## Roadmap (not implemented — ideas only)
 
-- **Globe polish.** Drag-to-rotate, pole tilt (the current maths is yaw-only,
-  deliberately), atmosphere glow, star field. None started.
+- **Drag-to-rotate.** Listed here for sequencing, but see Known imperfections
+  above: without it the globe is unusable under `prefers-reduced-motion`. This
+  is the highest-priority item in this list. Not started.
+- **Globe polish.** Pole tilt (the current maths is yaw-only, deliberately),
+  atmosphere glow, star field. None started.
 - **PAN→LAN→MAN→WAN scale ladder.** The globe is the WAN rung; zooming into a
   region would open its metro fabric, and into that, a rack. Free movement up
   and down one continuous game with a single shared clock. Design only — see

@@ -95,6 +95,13 @@ claimed about 688 Attack Hub in particular.
   its horizon crossings rather than along the limb arc. This is a known and
   deliberate imperfection, visible at the edge of the disc; see
   `ARCHITECTURE.md`.
+* That the globe *rotates*. The geometry was swept numerically through a full
+  turn (72 angles, 5 degrees apart, zero faults) and the rotation loop's body
+  was driven by hand, but the `requestAnimationFrame` scheduler was never
+  observed firing: the test browser sets `prefers-reduced-motion`, which this
+  code honours by not scheduling it, and the automated tab was backgrounded,
+  where rAF does not fire at all. The loop is three lines of ordinary rAF
+  recursion and was read, not run. See `AFFIRMATION.adoc`.
 
 === Explicitly NOT claimed
 
