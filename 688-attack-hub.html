@@ -188,7 +188,9 @@ body{
 
   <div class="body">
     <div class="screen" id="screen">
-      <svg id="map" viewBox="0 0 960 480" preserveAspectRatio="xMidYMid meet"></svg>
+      <svg id="map" viewBox="0 0 960 480" preserveAspectRatio="xMidYMid meet"
+           tabindex="0" role="application" style="touch-action:none"
+           aria-label="World map. In globe view, drag or use the left and right arrow keys to rotate."></svg>
       <div class="hud" id="hud"></div>
       <div class="tip" id="tip"></div>
       <div class="hint hide" id="hint"><b>Click a city</b> to install. Its exchange is where you wake up.</div>
@@ -297,6 +299,9 @@ const PX=l=>(l+180)*(960/360), PY=l=>(90-l)*(480/180);
    buy(), step() and visLevel() all go through project().     */
 const VIEW={mode:"flat",spin:0};
 const GL={R:206,CX:480,CY:240};
+/* drag state. dragMoved suppresses the click that a pointerup would otherwise
+   deliver to whichever city happened to be under the finger. */
+let drag=null,dragMoved=false;
 const SEG=24;                    /* sub-segments per backbone edge */
 const D2R=Math.PI/180;
 const wrap180=d=>((d%360)+540)%360-180;
@@ -555,7 +560,7 @@ function buildMap(){
     const t=mk("text",{x:0,y:0,"text-anchor":"middle",fill:"#5b6f79",
       "font-size":"10.5","font-family":"ui-monospace,Menlo,monospace"});
     t.textContent=r.n;
-    c.addEventListener("click",()=>click(r.id));
+    c.addEventListener("click",()=>{if(!dragMoved)click(r.id)});
     c.addEventListener("mouseenter",e=>showTip(r.id,e));
     c.addEventListener("mousemove",e=>moveTip(e));
     c.addEventListener("mouseleave",hideTip);
@@ -912,7 +917,7 @@ let rafId=null;
 const REDUCE=!!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 function spinLoop(){
   if(VIEW.mode!=="globe"){rafId=null;return}
-  VIEW.spin=(VIEW.spin+0.08)%360;
+  if(!drag)VIEW.spin=(VIEW.spin+0.08)%360;   /* your hand wins over the clock */
   positionMap();
   rafId=requestAnimationFrame(spinLoop);
 }
@@ -921,10 +926,58 @@ function setView(m){
   VIEW.mode=m;
   gFlatBg.style.display=m==="flat"?"":"none";
   gGlobeBg.style.display=m==="globe"?"":"none";
+  $("map").style.cursor=m==="globe"?"grab":"";
   positionMap();
   if(m==="globe"){if(!REDUCE&&rafId==null)rafId=requestAnimationFrame(spinLoop)}
   else if(rafId!=null){cancelAnimationFrame(rafId);rafId=null}
 }
+
+/* ── reaching the far side ─────────────────────────────────
+   Auto-rotation is suppressed under prefers-reduced-motion, which is the
+   right response to that query but would otherwise strand half the world
+   behind a frozen planet. Drag and the arrow keys are the way back, and
+   both drive positionMap() directly, so they work whether or not the
+   animation loop is running.                                            */
+function spinBy(deg){
+  VIEW.spin=(VIEW.spin+deg+360)%360;
+  positionMap();
+}
+/* client px -> degrees of rotation, via the SVG's own scale (viewBox is
+   960x480 under xMidYMid meet, so the drawing scale is the smaller ratio) */
+function pxToDeg(dx){
+  const r=$("map").getBoundingClientRect();
+  const s=Math.min(r.width/960,r.height/480)||1;
+  return (dx/s)/GL.R*(180/Math.PI);
+}
+$("map").addEventListener("pointerdown",e=>{
+  if(VIEW.mode!=="globe")return;
+  drag={x:e.clientX,spin0:VIEW.spin};dragMoved=false;
+  $("map").style.cursor="grabbing";
+  try{$("map").setPointerCapture(e.pointerId)}catch(_){}
+});
+$("map").addEventListener("pointermove",e=>{
+  if(!drag)return;
+  const dx=e.clientX-drag.x;
+  if(Math.abs(dx)>3)dragMoved=true;
+  VIEW.spin=(drag.spin0-pxToDeg(dx)%360+720)%360;
+  positionMap();
+});
+function endDrag(e){
+  if(!drag)return;
+  drag=null;
+  $("map").style.cursor=VIEW.mode==="globe"?"grab":"";
+  try{$("map").releasePointerCapture(e.pointerId)}catch(_){}
+  /* the click event lands after pointerup, so clear the guard one turn later */
+  setTimeout(()=>{dragMoved=false},0);
+}
+$("map").addEventListener("pointerup",endDrag);
+$("map").addEventListener("pointercancel",endDrag);
+$("map").addEventListener("keydown",e=>{
+  if(VIEW.mode!=="globe")return;
+  const step=e.shiftKey?15:5;
+  if(e.key==="ArrowLeft"){spinBy(-step);e.preventDefault()}
+  else if(e.key==="ArrowRight"){spinBy(step);e.preventDefault()}
+});
 document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>{
   setView(b.dataset.view);
   document.querySelectorAll("[data-view]").forEach(o=>o.setAttribute("aria-pressed",o===b));

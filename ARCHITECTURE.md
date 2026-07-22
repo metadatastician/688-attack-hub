@@ -105,7 +105,7 @@ frame budget, across 181 SVG elements.
   `pointer-events: none`, the far side of the planet stays clickable and you
   can select a city through the Earth.
 
-### Known imperfections
+### Known imperfection
 
 **Coastlines at the limb.** A polygon straddling the horizon is cut at `z = 0`
 and closed along the **chord** between its two crossings, not along the limb
@@ -113,26 +113,41 @@ arc. The seam is visible on close inspection at the edge of the disc. Fixing it
 means walking the limb circle between crossings, which needs an unambiguous
 winding direction; judged not worth the complexity for an MVP.
 
-**Reduced motion strands the globe — and this is an accessibility problem, not
-a cosmetic one.** `prefers-reduced-motion: reduce` suppresses the spin
-entirely, which is the correct response to that media query. But there is no
-drag-to-rotate yet, so a reduced-motion user who selects GLOBE gets a planet
-frozen at 0° with roughly half the world permanently behind it and no way to
-bring it round. The flat map remains the default and shows everything, so
-nothing is unreachable in the game as a whole — but the globe on its own is
-not usable for those users.
+## Reaching the far side
 
-This moves **drag-to-rotate out of "polish" and into "accessibility"**. It is
-listed under Roadmap below with the other polish items; it should not be
-treated as equivalent to them.
+`prefers-reduced-motion: reduce` suppresses the spin entirely, which is the
+correct response to that media query — but on its own it strands the user with
+a planet frozen at 0° and half the world permanently behind it. Auto-rotation
+therefore cannot be the *only* way to see the far side.
+
+Two manual controls exist, and both call `positionMap()` directly rather than
+going through the animation loop, so **they work whether or not that loop is
+running** — which is the entire point:
+
+- **Drag** (`pointerdown`/`move`/`up`, so mouse, touch and pen alike). Pixel
+  travel is converted through the SVG's own scale — `viewBox` is 960×480 under
+  `xMidYMid meet`, so the drawing scale is the smaller of the two ratios — then
+  divided by `GL.R` to give a trackball feel. The surface follows your finger.
+- **Arrow keys**, 5° a press, 15° with Shift. The `<svg>` carries
+  `tabindex="0"` and an `aria-label` so it is reachable by keyboard at all.
+
+Two details that are easy to get wrong:
+
+- **A drag that ends over a city must not install there.** `pointermove` sets
+  `dragMoved` past a 3px threshold, and each node's click listener checks it.
+  Because the browser delivers `click` *after* `pointerup`, the flag is cleared
+  on a `setTimeout(…, 0)` rather than immediately — clearing it inline would
+  let the stray click through.
+- **`touch-action: none`** on the `<svg>`, or dragging the globe scrolls the
+  page on touch devices instead.
+
+Dragging also suspends auto-rotation for its duration (`if(!drag)` in
+`spinLoop`), so the planet does not fight the hand holding it.
 
 ## Roadmap (not implemented — ideas only)
 
-- **Drag-to-rotate.** Listed here for sequencing, but see Known imperfections
-  above: without it the globe is unusable under `prefers-reduced-motion`. This
-  is the highest-priority item in this list. Not started.
-- **Globe polish.** Pole tilt (the current maths is yaw-only, deliberately),
-  atmosphere glow, star field. None started.
+- **Globe polish.** Pole tilt (the current maths is yaw-only, so the poles
+  cannot be brought into view), atmosphere glow, star field. None started.
 - **PAN→LAN→MAN→WAN scale ladder.** The globe is the WAN rung; zooming into a
   region would open its metro fabric, and into that, a rack. Free movement up
   and down one continuous game with a single shared clock. Design only — see
