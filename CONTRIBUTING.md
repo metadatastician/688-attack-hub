@@ -1,91 +1,116 @@
-<!--
-SPDX-License-Identifier: CC-BY-SA-4.0
-Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
--->
-# Contributing
+# Clone the repository
+git clone https://github.com/hyperpolymath/squisher-corpus.git
+cd squisher-corpus
 
-## Quick start
+# Using Nix (recommended for reproducibility)
+nix develop
 
-```bash
-git clone https://github.com/metadatastician/688-attack-hub.git
-cd 688-attack-hub
+# Or using toolbox/distrobox
+toolbox create squisher-corpus-dev
+toolbox enter squisher-corpus-dev
+# Install dependencies manually
+
+# Verify setup
+just check   # or: cargo check / mix compile / etc.
+just test    # Run test suite
 ```
 
-There is no build, no dependency install, and no toolchain to set up — the
-whole game is `688-attack-hub.html`. Open it directly in a browser to play,
-or `npm run serve` to serve it over `http://localhost:8000` instead.
-
-### Repository structure
-
+### Repository Structure
 ```
-688-attack-hub/
-├── 688-attack-hub.html   # the entire game — see ARCHITECTURE.md
-├── .github/workflows/    # ci.yml, pages.yml
-├── .machine_readable/    # descriptiles + contractiles (agent-facing metadata)
-├── .well-known/          # ai.txt, humans.txt, security.txt
-├── LICENSE / LICENSES/
-└── (the documentation set linked from README.md)
+squisher-corpus/
+├── src/                 # Source code (Perimeter 1-2)
+├── lib/                 # Library code (Perimeter 1-2)
+├── extensions/          # Extensions (Perimeter 2)
+├── plugins/             # Plugins (Perimeter 2)
+├── tools/               # Tooling (Perimeter 2)
+├── docs/                # Documentation (Perimeter 3)
+│   ├── architecture/    # ADRs, specs (Perimeter 2)
+│   └── proposals/       # RFCs (Perimeter 3)
+├── examples/            # Examples (Perimeter 3)
+├── spec/                # Spec tests (Perimeter 3)
+├── tests/               # Test suite (Perimeter 2-3)
+├── .well-known/         # Protocol files (Perimeter 1-3)
+├── .github/             # GitHub config (Perimeter 1)
+│   ├── ISSUE_TEMPLATE/
+│   └── workflows/
+├── CHANGELOG.md
+├── CODE_OF_CONDUCT.md
+├── CONTRIBUTING.md      # This file
+├── GOVERNANCE.md
+├── LICENSE
+├── MAINTAINERS.md
+├── README.adoc
+├── SECURITY.md
+├── flake.nix            # Nix flake (Perimeter 1)
+└── Justfile             # Task runner (Perimeter 1)
 ```
 
 ---
 
-## How to contribute
+## How to Contribute
 
-### Reporting bugs
+### Reporting Bugs
 
-Before reporting: search existing issues, and check `main` in case it's
-already fixed. When reporting, include what you did, what you expected, and
-what actually happened — a browser/OS is usually all the environment detail
-that matters here, since there's no build to go wrong.
+**Before reporting**:
+1. Search existing issues
+2. Check if it's already fixed in `main`
+3. Determine which perimeter the bug affects
 
-### Suggesting changes
+**When reporting**:
 
-Balance changes (upgrade costs, attention thresholds), new upgrades, and new
-exchange points/routes are all reasonable to propose via issue before
-sending a PR — game balance is a taste call the maintainer wants to weigh in
-on before code is written.
+Use the [bug report template](.github/ISSUE_TEMPLATE/bug_report.md) and include:
 
-### Your first contribution
+- Clear, descriptive title
+- Environment details (OS, versions, toolchain)
+- Steps to reproduce
+- Expected vs actual behaviour
+- Logs, screenshots, or minimal reproduction
 
-- [`good first issue`](https://github.com/metadatastician/688-attack-hub/labels/good%20first%20issue)
-- [`help wanted`](https://github.com/metadatastician/688-attack-hub/labels/help%20wanted)
-- [`documentation`](https://github.com/metadatastician/688-attack-hub/labels/documentation)
+### Suggesting Features
+
+**Before suggesting**:
+1. Check the [roadmap](ROADMAP.md) if available
+2. Search existing issues and discussions
+3. Consider which perimeter the feature belongs to
+
+**When suggesting**:
+
+Use the [feature request template](.github/ISSUE_TEMPLATE/feature_request.md) and include:
+
+- Problem statement (what pain point does this solve?)
+- Proposed solution
+- Alternatives considered
+- Which perimeter this affects
+
+### Your First Contribution
+
+Look for issues labelled:
+
+- [`good first issue`](https://github.com/hyperpolymath/squisher-corpus/labels/good%20first%20issue) — Simple Perimeter 3 tasks
+- [`help wanted`](https://github.com/hyperpolymath/squisher-corpus/labels/help%20wanted) — Community help needed
+- [`documentation`](https://github.com/hyperpolymath/squisher-corpus/labels/documentation) — Docs improvements
+- [`perimeter-3`](https://github.com/hyperpolymath/squisher-corpus/labels/perimeter-3) — Community sandbox scope
 
 ---
 
-## Development workflow
+## Development Workflow
 
-### Branch naming
-
+### Branch Naming
 ```
-docs/short-description       # Documentation
-fix/issue-number-description  # Bug fixes
-feat/short-description        # New upgrades/mechanics/regions
+docs/short-description       # Documentation (P3)
+test/what-added              # Test additions (P3)
+feat/short-description       # New features (P2)
+fix/issue-number-description # Bug fixes (P2)
+refactor/what-changed        # Code improvements (P2)
+security/what-fixed          # Security fixes (P1-2)
 ```
 
-### Commit messages
+### Commit Messages
 
-[Conventional Commits](https://www.conventionalcommits.org/):
+We follow [Conventional Commits](https://www.conventionalcommits.org/):
 ```
 <type>(<scope>): <description>
-```
 
-### Before opening a PR
+[optional body]
 
-- Open the game in a browser and actually play through the change.
-- If you touched `688-attack-hub.html`, re-run the checks `ci.yml` runs
-  locally first:
-  ```bash
-  grep -E 'fetch\(|XMLHttpRequest|WebSocket|eval\(|new Function\(' 688-attack-hub.html && echo "FIX: network/eval primitive found" || echo ok
-  ```
-- If you touched anything under `.machine_readable/`, keep the SPDX header
-  on every `.a2ml` file and don't reintroduce unsubstituted doubled-brace
-  template tokens.
-- Don't add a build step, a bundler, or a dependency without discussing it
-  first in an issue — "one self-contained file, nothing to install" is a
-  deliberate property of this repo (see `GOVERNANCE.adoc`), not an oversight.
-
-### Review
-
-The sole maintainer (`@hyperpolymath`, per `MAINTAINERS.adoc`) reviews PRs;
-see `GOVERNANCE.adoc` for the full decision-making process.
+[optional footer]

@@ -1,104 +1,406 @@
-<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
-<!-- Copyright (c) 2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk> -->
-
 # Security Policy
 
-## The honest threat model
+<!-- 
+============================================================================
+TEMPLATE INSTRUCTIONS (delete this block before publishing)
+============================================================================
+Replace all {{PLACEHOLDER}} values with your information:
+  Squisher Corpus     - Your project name
+  hyperpolymath            - GitHub username or org (e.g., hyperpolymath)
+  squisher-corpus             - Repository name
+  j.d.a.jewell@open.ac.uk   - Security contact email
+  TBD  - Your PGP key fingerprint (40 chars, no spaces)
+  https://github.com/hyperpolymath.gpg      - URL to your public PGP key
+  github.com/hyperpolymath/squisher-corpus          - Your website/domain
+  2026     - Current year for copyright
 
-688 Attack Hub is a single, self-contained HTML file that runs entirely in
-the browser. It has:
+Optional: Remove sections that don't apply (e.g., PGP if you don't use it)
+============================================================================
+-->
 
-- **no runtime dependencies** — nothing from npm, no CDN, no vendored
-  libraries;
-- **no network access** — the game makes no `fetch`, `XMLHttpRequest`, or
-  `WebSocket` calls, checked by hand at repo creation and re-checked by
-  `ci.yml` on every push;
-- **no server component**, no backend, and no deployed service beyond the
-  static GitHub Pages copy;
-- **no user accounts, no authentication, no persistence, and no telemetry** —
-  it collects and stores nothing about the person playing it;
-- **no file, clipboard, camera, microphone, or location access.**
+We take security seriously. We appreciate your efforts to responsibly disclose vulnerabilities and will make every effort to acknowledge your contributions.
 
-Nothing in that list is aspirational; each is checkable directly in
-`688-attack-hub.html`, and the network/eval check is enforced by CI (see
-`AUDIT.adoc` for exactly what is and isn't verified).
+## Table of Contents
 
-The realistic consequence is that the attack surface is very small. A
-vulnerability here would most plausibly be one of:
+- [Reporting a Vulnerability](#reporting-a-vulnerability)
+- [What to Include](#what-to-include)
+- [Response Timeline](#response-timeline)
+- [Disclosure Policy](#disclosure-policy)
+- [Scope](#scope)
+- [Safe Harbour](#safe-harbour)
+- [Recognition](#recognition)
+- [Security Updates](#security-updates)
+- [Security Best Practices](#security-best-practices)
 
-1. **Supply-chain compromise of the published artefact** — the file served
-   from GitHub Pages differing from the file in the repository.
-2. **A CI/workflow weakness** — an unpinned or compromised GitHub Action.
-3. **A browser-side flaw in the bundle itself**, such as an injection path
-   through URL parameters or `localStorage` (the game does not currently use
-   either, but this would be the place to look if that changes).
+---
 
-## Supported versions
+## Reporting a Vulnerability
 
-| Version | Supported |
-|---------|-----------|
-| `main` (latest commit) | Yes |
-| Anything else | No |
+### Preferred Method: GitHub Security Advisories
 
-This is a small project with a single maintainer and no release branches.
-Security fixes land on `main`; there is no backporting.
+The preferred method for reporting security vulnerabilities is through GitHub's Security Advisory feature:
 
-## Reporting a vulnerability
+1. Navigate to [Report a Vulnerability](https://github.com/hyperpolymath/squisher-corpus/security/advisories/new)
+2. Click **"Report a vulnerability"**
+3. Complete the form with as much detail as possible
+4. Submit — we'll receive a private notification
 
-**Please do not open a public issue for a security report.**
+This method ensures:
 
-Use GitHub's private vulnerability reporting:
+- End-to-end encryption of your report
+- Private discussion space for collaboration
+- Coordinated disclosure tooling
+- Automatic credit when the advisory is published
 
-> **Security** tab → **Report a vulnerability**
+### Alternative: Encrypted Email
 
-on <https://github.com/metadatastician/688-attack-hub>.
+If you cannot use GitHub Security Advisories, you may email us directly:
 
-If that is unavailable to you, contact the maintainer through the address
-listed in [`.well-known/security.txt`](.well-known/security.txt).
+| | |
+|---|---|
+| **Email** | j.d.a.jewell@open.ac.uk |
+| **PGP Key** | [Download Public Key](https://github.com/hyperpolymath.gpg) |
+| **Fingerprint** | `TBD` |
 
-Please include what you did, what happened, what you expected, and the
-browser and version.
+```bash
+# Import our PGP key
+curl -sSL https://github.com/hyperpolymath.gpg | gpg --import
 
-### What to expect
+# Verify fingerprint
+gpg --fingerprint j.d.a.jewell@open.ac.uk
 
-| Stage | Target |
-|-------|--------|
-| Acknowledgement | 7 days |
-| Initial assessment | 14 days |
-| Fix or documented decision not to fix | 90 days |
+# Encrypt your report
+gpg --armor --encrypt --recipient j.d.a.jewell@open.ac.uk report.txt
+```
 
-These are targets for a volunteer single-maintainer project, not a
-contractual SLA. If you have not heard back within the acknowledgement
-window, please chase — it means the message was missed, not ignored.
+> **⚠️ Important:** Do not report security vulnerabilities through public GitHub issues, pull requests, discussions, or social media.
 
-You will be credited in the release notes unless you prefer otherwise. There
-is no bug bounty.
+---
 
-## Out of scope
+## What to Include
 
-The following are not vulnerabilities in this project:
+A good vulnerability report helps us understand and reproduce the issue quickly.
 
-- **Cheating.** The game is client-side and fully open source. Editing the
-  page's JavaScript to give yourself more port points is not a security
-  issue — it is the licence working as intended.
-- **Reports of "no Content-Security-Policy"** on a static file with no
-  network access and no third-party content.
-- **Automated scanner output submitted without a demonstrated impact.**
-- **The game's flavour text.** The upgrades and NOC countermeasures are
-  written as network-engineering jokes, not as a real attack tool or a
-  claim about real-world network security practice — see `AUDIT.adoc`.
+### Required Information
 
-## Security practices in this repository
+- **Description**: Clear explanation of the vulnerability
+- **Impact**: What an attacker could achieve (confidentiality, integrity, availability)
+- **Affected versions**: Which versions/commits are affected
+- **Reproduction steps**: Detailed steps to reproduce the issue
 
-- Every GitHub Action is **pinned to a full commit SHA**, never a tag or
-  branch. `ci.yml` fails the build otherwise, and the organisation also
-  enforces `sha_pinning_required`, so an unpinned action does not merely
-  fail review — it fails to start at all.
-- **Code scanning** is enabled via GitHub's default setup (actions and
-  javascript, extended query suite, weekly).
-- **Dependabot** monitors GitHub Actions versions. There are no package
-  ecosystems to monitor, because there are no packages.
-- `ci.yml` asserts on every push that the game makes no network calls and no
-  dynamic-code execution.
-- The project is **dependency-free by design**, which removes the largest
-  single source of vulnerabilities in comparable JavaScript projects.
+### Helpful Additional Information
+
+- **Proof of concept**: Code, scripts, or screenshots demonstrating the vulnerability
+- **Attack scenario**: Realistic attack scenario showing exploitability
+- **CVSS score**: Your assessment of severity (use [CVSS 3.1 Calculator](https://www.first.org/cvss/calculator/3.1))
+- **CWE ID**: Common Weakness Enumeration identifier if known
+- **Suggested fix**: If you have ideas for remediation
+- **References**: Links to related vulnerabilities, research, or advisories
+
+### Example Report Structure
+
+```markdown
+## Summary
+[One-sentence description of the vulnerability]
+
+## Vulnerability Type
+[e.g., SQL Injection, XSS, SSRF, Path Traversal, etc.]
+
+## Affected Component
+[File path, function name, API endpoint, etc.]
+
+## Affected Versions
+[Version range or specific commits]
+
+## Severity Assessment
+- CVSS 3.1 Score: [X.X]
+- CVSS Vector: [CVSS:3.1/AV:X/AC:X/PR:X/UI:X/S:X/C:X/I:X/A:X]
+
+## Description
+[Detailed technical description]
+
+## Steps to Reproduce
+1. [First step]
+2. [Second step]
+3. [...]
+
+## Proof of Concept
+[Code, curl commands, screenshots, etc.]
+
+## Impact
+[What can an attacker achieve?]
+
+## Suggested Remediation
+[Optional: your ideas for fixing]
+
+## References
+[Links to related issues, CVEs, research]
+```
+
+---
+
+## Response Timeline
+
+We commit to the following response times:
+
+| Stage | Timeframe | Description |
+|-------|-----------|-------------|
+| **Initial Response** | 48 hours | We acknowledge receipt and confirm we're investigating |
+| **Triage** | 7 days | We assess severity, confirm the vulnerability, and estimate timeline |
+| **Status Update** | Every 7 days | Regular updates on remediation progress |
+| **Resolution** | 90 days | Target for fix development and release (complex issues may take longer) |
+| **Disclosure** | 90 days | Public disclosure after fix is available (coordinated with you) |
+
+> **Note:** These are targets, not guarantees. Complex vulnerabilities may require more time. We'll communicate openly about any delays.
+
+---
+
+## Disclosure Policy
+
+We follow **coordinated disclosure** (also known as responsible disclosure):
+
+1. **You report** the vulnerability privately
+2. **We acknowledge** and begin investigation
+3. **We develop** a fix and prepare a release
+4. **We coordinate** disclosure timing with you
+5. **We publish** security advisory and fix simultaneously
+6. **You may publish** your research after disclosure
+
+### Our Commitments
+
+- We will not take legal action against researchers who follow this policy
+- We will work with you to understand and resolve the issue
+- We will credit you in the security advisory (unless you prefer anonymity)
+- We will notify you before public disclosure
+- We will publish advisories with sufficient detail for users to assess risk
+
+### Your Commitments
+
+- Report vulnerabilities promptly after discovery
+- Give us reasonable time to address the issue before disclosure
+- Do not access, modify, or delete data beyond what's necessary to demonstrate the vulnerability
+- Do not degrade service availability (no DoS testing on production)
+- Do not share vulnerability details with others until coordinated disclosure
+
+### Disclosure Timeline
+
+```
+Day 0          You report vulnerability
+Day 1-2        We acknowledge receipt
+Day 7          We confirm vulnerability and share initial assessment
+Day 7-90       We develop and test fix
+Day 90         Coordinated public disclosure
+               (earlier if fix is ready; later by mutual agreement)
+```
+
+If we cannot reach agreement on disclosure timing, we default to 90 days from your initial report.
+
+---
+
+## Scope
+
+### In Scope ✅
+
+The following are within scope for security research:
+
+- This repository (`hyperpolymath/squisher-corpus`) and all its code
+- Official releases and packages published from this repository
+- Documentation that could lead to security issues
+- Build and deployment configurations in this repository
+- Dependencies (report here, we'll coordinate with upstream)
+
+### Out of Scope ❌
+
+The following are **not** in scope:
+
+- Third-party services we integrate with (report directly to them)
+- Social engineering attacks against maintainers
+- Physical security
+- Denial of service attacks against production infrastructure
+- Spam, phishing, or other non-technical attacks
+- Issues already reported or publicly known
+- Theoretical vulnerabilities without proof of concept
+
+### Qualifying Vulnerabilities
+
+We're particularly interested in:
+
+- Remote code execution
+- SQL injection, command injection, code injection
+- Authentication/authorisation bypass
+- Cross-site scripting (XSS) and cross-site request forgery (CSRF)
+- Server-side request forgery (SSRF)
+- Path traversal / local file inclusion
+- Information disclosure (credentials, PII, secrets)
+- Cryptographic weaknesses
+- Deserialisation vulnerabilities
+- Memory safety issues (buffer overflows, use-after-free, etc.)
+- Supply chain vulnerabilities (dependency confusion, etc.)
+- Significant logic flaws
+
+### Non-Qualifying Issues
+
+The following generally do not qualify as security vulnerabilities:
+
+- Missing security headers on non-sensitive pages
+- Clickjacking on pages without sensitive actions
+- Self-XSS (requires victim to paste code)
+- Missing rate limiting (unless it enables a specific attack)
+- Username/email enumeration (unless high-risk context)
+- Missing cookie flags on non-sensitive cookies
+- Software version disclosure
+- Verbose error messages (unless exposing secrets)
+- Best practice deviations without demonstrable impact
+
+---
+
+## Safe Harbour
+
+We support security research conducted in good faith.
+
+### Our Promise
+
+If you conduct security research in accordance with this policy:
+
+- ✅ We will not initiate legal action against you
+- ✅ We will not report your activity to law enforcement
+- ✅ We will work with you in good faith to resolve issues
+- ✅ We consider your research authorised under the Computer Fraud and Abuse Act (CFAA), UK Computer Misuse Act, and similar laws
+- ✅ We waive any potential claim against you for circumvention of security controls
+
+### Good Faith Requirements
+
+To qualify for safe harbour, you must:
+
+- Comply with this security policy
+- Report vulnerabilities promptly
+- Avoid privacy violations (do not access others' data)
+- Avoid service degradation (no destructive testing)
+- Not exploit vulnerabilities beyond proof-of-concept
+- Not use vulnerabilities for profit (beyond bug bounties where offered)
+
+> **⚠️ Important:** This safe harbour does not extend to third-party systems. Always check their policies before testing.
+
+---
+
+## Recognition
+
+We believe in recognising security researchers who help us improve.
+
+### Hall of Fame
+
+Researchers who report valid vulnerabilities will be acknowledged in our [Security Acknowledgments](SECURITY-ACKNOWLEDGMENTS.md) (unless they prefer anonymity).
+
+Recognition includes:
+
+- Your name (or chosen alias)
+- Link to your website/profile (optional)
+- Brief description of the vulnerability class
+- Date of report
+
+### What We Offer
+
+- ✅ Public credit in security advisories
+- ✅ Acknowledgment in release notes
+- ✅ Entry in our Hall of Fame
+- ✅ Reference/recommendation letter upon request (for significant findings)
+
+### What We Don't Currently Offer
+
+- ❌ Monetary bug bounties
+- ❌ Hardware or swag
+- ❌ Paid security research contracts
+
+> **Note:** We're a community project with limited resources. Your contributions help everyone who uses this software.
+
+---
+
+## Security Updates
+
+### Receiving Updates
+
+To stay informed about security updates:
+
+- **Watch this repository**: Click "Watch" → "Custom" → Select "Security alerts"
+- **GitHub Security Advisories**: Published at [Security Advisories](https://github.com/hyperpolymath/squisher-corpus/security/advisories)
+- **Release notes**: Security fixes noted in [CHANGELOG](CHANGELOG.md)
+
+### Update Policy
+
+| Severity | Response |
+|----------|----------|
+| **Critical/High** | Patch release as soon as fix is ready |
+| **Medium** | Included in next scheduled release (or earlier) |
+| **Low** | Included in next scheduled release |
+
+### Supported Versions
+
+<!-- Adjust this table to match your actual version support policy -->
+
+| Version | Supported | Notes |
+|---------|-----------|-------|
+| `main` branch | ✅ Yes | Latest development |
+| Latest release | ✅ Yes | Current stable |
+| Previous minor release | ✅ Yes | Security fixes backported |
+| Older versions | ❌ No | Please upgrade |
+
+---
+
+## Security Best Practices
+
+When using Squisher Corpus, we recommend:
+
+### General
+
+- Keep dependencies up to date
+- Use the latest stable release
+- Subscribe to security notifications
+- Review configuration against security documentation
+- Follow principle of least privilege
+
+### For Contributors
+
+- Never commit secrets, credentials, or API keys
+- Use signed commits (`git config commit.gpgsign true`)
+- Review dependencies before adding them
+- Run security linters locally before pushing
+- Report any concerns about existing code
+
+---
+
+## Additional Resources
+
+- [Our PGP Public Key](https://github.com/hyperpolymath.gpg)
+- [Security Advisories](https://github.com/hyperpolymath/squisher-corpus/security/advisories)
+- [Changelog](CHANGELOG.md)
+- [Contributing Guidelines](CONTRIBUTING.md)
+- [CVE Database](https://cve.mitre.org/)
+- [CVSS Calculator](https://www.first.org/cvss/calculator/3.1)
+
+---
+
+## Contact
+
+| Purpose | Contact |
+|---------|---------|
+| **Security issues** | [Report via GitHub](https://github.com/hyperpolymath/squisher-corpus/security/advisories/new) or j.d.a.jewell@open.ac.uk |
+| **General questions** | [GitHub Discussions](https://github.com/hyperpolymath/squisher-corpus/discussions) |
+| **Other enquiries** | See [README](README.md) for contact information |
+
+---
+
+## Policy Changes
+
+This security policy may be updated from time to time. Significant changes will be:
+
+- Committed to this repository with a clear commit message
+- Noted in the changelog
+- Announced via GitHub Discussions (for major changes)
+
+---
+
+*Thank you for helping keep Squisher Corpus and its users safe.* 🛡️
+
+---
+
+<sub>Last updated: 2026 · Policy version: 1.0.0</sub>
