@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# 688-attack-hub.launcher.a2ml — per-app launcher config for 688 Attack Hub.
+# Compliant with launcher-standard.a2ml v0.3.0
+#
+# 688 Attack Hub: Game
+
+[project]
+name         = "688-attack-hub"
+display      = "688 Attack Hub"
+description  = "Game"
+categories   = ["Game"]
+version      = "0.1.0"
+license      = "MPL-2.0"
+
+[repo]
+# NOTE: repo-dir is resolved at runtime from the launcher script location.
+# Do NOT hardcode absolute paths. Leave empty or use relative paths.
+path = ""
+
+[runtime]
+# Node.js based game
+kind = "server-url"
+port = 3000
+url  = "http://localhost:3000"
+# Uses npm scripts
+startup-command-search = [
+    "{repo-dir}/node_modules/.bin/serve",
+    "npx serve",
+    "serve",
+]
+# Per launcher-standard.a2ml [runtime] section:
+# PID files MUST use XDG_RUNTIME_DIR or TMPDIR, NEVER /tmp directly
+# Log files MUST use XDG_STATE_HOME, NEVER /tmp directly
+pid-file = "${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/688-attack-hub.pid"
+log-file = "${XDG_STATE_HOME:-$HOME/.local/state}/688-attack-hub/game.log"
+wait-for-url-timeout-seconds = 15
+
+[version-output]
+# Per launcher-standard.a2ml [version-output] section
+first-line-format = "688-attack-hub {version} ({build-sha-short}) [{platform}]"
+example = "688-attack-hub 0.1.0 (abc1234) [linux-x86_64]"
+exit-code = 0
+
+[icon]
+source = "{repo-dir}/assets/icon-256.png"
