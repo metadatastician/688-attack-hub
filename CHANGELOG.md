@@ -30,6 +30,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`main` is green again.** The 2026-07-26 estate sweeps (#6, #8) left `ci` and a
+  swept-in CodeQL workflow both failing. Neither failure involved the game, whose
+  bytes are unchanged. Details below; the common thread is that a sweep copied
+  another repository's files into this one.
+- **`CODE_OF_CONDUCT.md` no longer claims to be squisher-corpus's.** The sweep
+  replaced this repo's Code of Conduct with one carrying an undeleted
+  `TEMPLATE INSTRUCTIONS` block. That block is self-detonating: its own first
+  line instructs the reader to replace all values, using a literal doubled-brace
+  `PLACEHOLDER` token to say so — and that literal is what `ci.yml`'s placeholder
+  gate matches, so the block trips the gate even when every real token has been
+  correctly substituted. The gate was working exactly as designed: it caught a
+  real regression. (This entry deliberately describes the token rather than
+  quoting it, because quoting it here would fail the build — the gate scans the
+  whole tree, documentation included.) The substituted values were squisher-corpus's, so the document
+  pledged a harassment-free experience in "Squisher Corpus" and pointed its
+  Discussions link at `hyperpolymath/squisher-corpus`. Restored the project name,
+  the correct link and the SPDX header the sweep deleted; kept the two genuine
+  grammar fixes the sweep did make; reverted the reporting SLA to this repo's own
+  prior "5 business days", because promising 48-hour response on a one-file toy
+  is the kind of aspirational overclaim `AUDIT.adoc` exists to prevent. Also
+  fixed "a maintainers member" (ungrammatical in both versions), dropped an
+  "Anonymous Form" row whose link never existed, and replaced references to a
+  "Perimeter" access model that is defined nowhere in this repo.
+- **Removed the swept-in `.github/workflows/codeql.yml`.** Every run of it failed
+  with `Code Scanning could not process the submitted SARIF file: CodeQL analyses
+  from advanced configurations cannot be processed when the default setup is
+  enabled`. PR #9 had repointed its action SHA, which fixed resolution and
+  thereby exposed this deeper conflict. Default setup remains configured, green,
+  and sufficient. Note this file's existence already violated a documented
+  deviation in `.machine_readable/rsr-profile.a2ml`, which has said "No advanced
+  codeql.yml" since the repo was created — so this is a restoration of
+  conformance, not a new decision.
+- **Removed `.github/settings.yml`, which declared this repository to be
+  `paint-type`** — name, description and homepage copied verbatim from a sibling,
+  plus required status checks (`Cargo check + clippy + fmt`, `Cargo test`,
+  `analyze (javascript-typescript, none)`) that no workflow here produces, in a
+  repo with no `Cargo.toml`. It configured nothing, because the Probot Settings
+  app is not applying to this repository; had it ever been applied, the repo would
+  have tried to rename itself and acquired required checks that can never report,
+  which presents as permanently-pending rather than red.
+- **The `paint-type` leak was wider than `settings.yml`** — 18 references across
+  11 files, and two were live misroutes rather than cosmetic: the issue-template
+  chooser sent "Discussions" *and* "Report a security vulnerability" to
+  `metadatastician/paint-type`, so a security reporter would have filed a private
+  advisory against the wrong repository. Corrected throughout, including two
+  Level-2 AI manifests that described themselves as belonging to paint-type.
+- **Added the missing SPDX headers to two `.a2ml` files.** `ci.yml` requires one
+  on every `.a2ml`, and the two swept-in template manifests had none. This was a
+  *hidden second failure*: the placeholder step fails before the SPDX step runs,
+  so fixing the Code of Conduct alone would have moved the red build down one step
+  rather than clearing it.
+- **Two documents had been silently invalidated by the sweep and are now accurate
+  again without being edited.** `ARCHITECTURE.md` describes
+  `.github/workflows/` as "ci.yml, pages.yml" and `AUDIT.adoc` says CodeQL
+  "covers the two workflows" — both true before the sweep and after this change,
+  but false for the eight days a third workflow existed.
 - **CodeQL default setup**, which had been failing at startup on every push:
   it was configured with an empty language list, because the repository
   detects as 100% HTML and CodeQL cannot target the game's inline `<script>`

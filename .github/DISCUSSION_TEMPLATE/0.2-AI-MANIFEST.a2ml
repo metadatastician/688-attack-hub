@@ -1,6 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # AI Manifest - Level 2: .github/DISCUSSION_TEMPLATE
 
-This is the AI manifest for the `.github/DISCUSSION_TEMPLATE/` directory (Level 2) of paint-type.
+This is the AI manifest for the `.github/DISCUSSION_TEMPLATE/` directory (Level 2) of 688 Attack Hub.
 
 ## Purpose
 
@@ -10,7 +11,7 @@ community conversations and provide context for different discussion topics.
 ## Authority Split
 
 - **Central protocol authority:** `standards/` repository discussion template standards
-- **Local integration authority (this directory):** paint-type specific discussion templates
+- **Local integration authority (this directory):** 688 Attack Hub specific discussion templates
 
 ## Canonical Files
 
