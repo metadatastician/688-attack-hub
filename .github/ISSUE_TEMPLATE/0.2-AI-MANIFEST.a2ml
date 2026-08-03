@@ -1,16 +1,17 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # AI Manifest - Level 2: .github/ISSUE_TEMPLATE
 
-This is the AI manifest for the `.github/ISSUE_TEMPLATE/` directory (Level 2) of paint-type.
+This is the AI manifest for the `.github/ISSUE_TEMPLATE/` directory (Level 2) of 688 Attack Hub.
 
 ## Purpose
 
 The `ISSUE_TEMPLATE/` directory contains GitHub issue templates that standardize
-and streamline the issue reporting and tracking process for the paint-type repository.
+and streamline the issue reporting and tracking process for the 688 Attack Hub repository.
 
 ## Authority Split
 
 - **Central protocol authority:** `standards/` repository issue template standards
-- **Local integration authority (this directory):** paint-type specific issue templates
+- **Local integration authority (this directory):** 688 Attack Hub specific issue templates
 
 ## Canonical Files
 
