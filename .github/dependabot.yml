@@ -1,6 +1,18 @@
 # SPDX-License-Identifier: MPL-2.0
-# Dependabot configuration for RSR-compliant repositories
-# Covers common ecosystems - remove unused ones for your project
+# Dependabot configuration for 688 Attack Hub.
+#
+# Pruned to the ecosystems this repo actually has. The RSR template ships every
+# common ecosystem with the instruction "remove unused ones for your project";
+# nothing removed them, so `pip` and `nix` failed on every scheduled run with
+# "Dependabot encountered an error performing the update" — there is no Python
+# manifest and no .nix file here. `cargo` and `mix` had no manifest either.
+#
+# This repo is one self-contained HTML file plus a package.json whose only
+# script is `python3 -m http.server`. Two ecosystems are all it can have:
+# github-actions (the two workflows) and npm (package.json).
+#
+# Nix is retired estate-wide in favour of Guix, so a `nix` block is wrong in
+# every repo, not just this one.
 
 version: 2
 updates:
@@ -14,38 +26,8 @@ updates:
         patterns:
           - "*"
 
-  # Rust/Cargo
-  - package-ecosystem: "cargo"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    # `open-pull-requests-limit: 0` suppresses routine version-update PRs
-    # while leaving Dependabot SECURITY PRs flowing. The previous
-    # `ignore: "*" patch` rule also silenced security PRs under GitHub\'s
-    # current Dependabot behaviour. See rsr-template-repo commit 78b050e
-    # and 007-lang/audits/audit-dependabot-automation-gap-2026-04-17.md.
-    open-pull-requests-limit: 0
-
-  # Elixir/Mix
-  - package-ecosystem: "mix"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-
   # Node.js/npm
   - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-
-  # Python/pip
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-
-  # Nix flakes
-  - package-ecosystem: "nix"
     directory: "/"
     schedule:
       interval: "weekly"
