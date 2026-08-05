@@ -196,15 +196,23 @@ The maintainers will follow these guidelines in determining consequences:
 
 **Duration**: Permanent (with appeal rights after 12 months)
 
-### Enforcement for Contributors with Write Access
+### Enforcement Across Perimeters
 
-For maintainers and anyone else holding write access to the repository:
+This project uses the estate's **Tri-Perimeter Contribution Framework (TPCF)**, a
+graduated trust model defined in `hyperpolymath/standards`
+(`rhodium-standard-repositories/README.adoc`):
+
+- 🔒 **Perimeter 1 (Core)** — maintainers only; shell runtime, build systems
+- 🧠 **Perimeter 2 (Expert)** — trusted contributors; protocol extensions, validators
+- 🌱 **Perimeter 3 (Community)** — open to all; docs, tests, proposals
+
+For contributors with elevated access (Perimeter 2 or 1):
 
 | Level | Additional Consequence |
 |-------|----------------------|
 | Correction | Noted in contributor record |
 | Warning | Access privileges may be temporarily reduced |
-| Temporary Ban | Write access suspended for the ban duration |
+| Temporary Ban | Access reduced to Perimeter 3 for ban duration |
 | Permanent Ban | All access revoked |
 
 ---
@@ -260,7 +268,7 @@ Beyond enforcement, we actively work to prevent issues:
 
 **Onboarding**
 - All contributors are expected to read this Code of Conduct
-- Anyone requesting write access must confirm they've read and understood it
+- Perimeter 2 applicants must confirm they've read and understood it
 - Maintainers receive additional training on enforcement
 
 **Culture**
