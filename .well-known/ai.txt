@@ -7,7 +7,8 @@ Disallow-Training: yes
 Disallow-Summarization: no
 Disallow-Generation: yes
 
-# This project's code is licensed under AGPL-3.0-or-later.
+# This project's game and workflows are AGPL-3.0-or-later; its documentation is
+# CC-BY-SA-4.0 and its scripts are MPL-2.0. See LICENSES/ and DEBT.adoc.
 # AI agents may read and analyze this code for assisting contributors.
 # AI agents must NOT use this code for model training without explicit consent.
 #

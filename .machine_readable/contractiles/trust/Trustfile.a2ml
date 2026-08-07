@@ -54,7 +54,7 @@ Current trust level: standard
 
 ## Sensitive areas requiring explicit approval
 
-- GOVERNANCE.adoc
+- GOVERNANCE.md
 - MAINTAINERS.adoc
 - .github/CODEOWNERS
 - LICENSE / LICENSES/

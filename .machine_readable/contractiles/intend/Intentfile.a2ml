@@ -35,7 +35,7 @@ This repository is NOT:
 
 If you are unsure whether a change is in scope, ask. Sensitive areas:
 - The no-network-calls invariant (see 0-AI-MANIFEST.a2ml)
-- Licence, GOVERNANCE.adoc, MAINTAINERS.adoc
+- Licence, GOVERNANCE.md, MAINTAINERS.adoc
 - .machine_readable/descriptiles/CLADE.a2ml (repo identity)
 
 ## Committed Next-Actions
