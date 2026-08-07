@@ -53,6 +53,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`CONTRIBUTING.md` was template boilerplate for a different repository.** It
+  began mid-code-block, told contributors to run `nix develop` and
+  `just check # or: cargo check / mix compile`, and documented a directory tree
+  — `src/`, `lib/`, `extensions/`, `plugins/`, `tools/`, `examples/`, `spec/`,
+  `flake.nix` — none of which exists, and which `ARCHITECTURE.md` explicitly
+  says does not exist. It also linked four files by the wrong name. Rewritten
+  against the actual tree, with the Tri-Perimeter framework preserved and mapped
+  onto real paths.
+- **Nix and Python removed from the last four places they survived.** Pruning
+  the `nix` and `pip` entries from `dependabot.yml` in #12 had been mistaken for
+  the job being done; the vocabulary was still in `CONTRIBUTING.md` (recommending
+  `nix develop`), `EXPLAINME.adoc` (describing the Python server),
+  `.gitignore` (a Python section) and `dependabot.yml`'s own comments. Nix is
+  retired estate-wide in favour of Guix and Python is banned outright; where a
+  real language is needed the choices are Rust, Julia, AffineScript or Elixir as
+  the job demands, and this repo needs none of them.
 - **A malformed lockfile line was taking out every workflow in the repo.** A
   reusable-caller entry had been written into `actions.lock`'s `dependencies:`
   map instead of `workflows:`; every other value there is an object describing
@@ -103,9 +119,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   grammar fixes the sweep did make; reverted the reporting SLA to this repo's own
   prior "5 business days", because promising 48-hour response on a one-file toy
   is the kind of aspirational overclaim `AUDIT.adoc` exists to prevent. Also
-  fixed "a maintainers member" (ungrammatical in both versions), dropped an
-  "Anonymous Form" row whose link never existed, and replaced references to a
-  "Perimeter" access model that is defined nowhere in this repo.
+  fixed "a maintainers member" (ungrammatical in both versions), and dropped an
+  "Anonymous Form" row whose link never existed.
+
+  **Corrected shortly afterwards by #15.** This change also stripped references
+  to a "Perimeter" access model, on the stated grounds that it was "defined
+  nowhere in this repo". That was wrong, and the reasoning was the interesting
+  part of the error: a local grep found nothing, and absence locally was taken
+  as absence entirely. The Tri-Perimeter Contribution Framework is an
+  estate-wide model. #15 restored it and defined it properly in
+  `CODE_OF_CONDUCT.md`; `CONTRIBUTING.md` now maps the three perimeters onto
+  this repo's real paths.
 - **Removed the swept-in `.github/workflows/codeql.yml`.** Every run of it failed
   with `Code Scanning could not process the submitted SARIF file: CodeQL analyses
   from advanced configurations cannot be processed when the default setup is

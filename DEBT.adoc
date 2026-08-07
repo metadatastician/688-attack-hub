@@ -105,6 +105,49 @@ Verified working: `/` serves the game, a known path serves, an unknown path
 
 You still do not need it. The file opens from disk.
 
+=== D1b — `CONTRIBUTING.md` was template boilerplate for a different repo *(FIXED in this commit)*
+
+It was not merely stale. It began *mid-code-block* — a closing fence at line 16
+with no opening one and no heading — and then told contributors to run
+`nix develop` (retired estate-wide in favour of Guix) and
+`just check # or: cargo check / mix compile` (no `Justfile`, no `Cargo.toml`, no
+Elixir here).
+
+Its "Repository Structure" listed `src/`, `lib/`, `extensions/`, `plugins/`,
+`tools/`, `examples/`, `spec/` and `flake.nix`. **None of those exist**, and
+`ARCHITECTURE.md` says so in as many words. It also linked `MAINTAINERS.md`
+(the file is `.adoc`), `README.adoc` (it is `.md`), `ROADMAP.md` (does not
+exist) and `bug_report.md` (the templates are `.yml`).
+
+The estate's language choices, for the record, are Rust, Julia, AffineScript or
+Elixir as the job demands. This repository needs none of them, which is rather
+the point of it — and that is now what the file says.
+
+Rewritten against the actual tree, with the Tri-Perimeter framework preserved
+and mapped onto real paths rather than invented ones.
+
+=== D1c — Nix and Python survived in four more places *(FIXED in this commit)*
+
+`dependabot.yml` had been pruned of the `nix` and `pip` *entries* in #12, and
+that was mistaken for the job being done. The vocabulary was still present:
+
+* `CONTRIBUTING.md` recommended `nix develop` and documented a `flake.nix` —
+  see D1b.
+* `EXPLAINME.adoc` still described `package.json` as wrapping
+  `python3 -m http.server`, which stopped being true in this commit.
+* `.gitignore` carried a `# Python (SaltStack only)` section.
+* `dependabot.yml`'s own comments dwelt on the retired ecosystems rather than
+  stating the policy. Rewritten to say plainly: never re-add `nix` (Guix only),
+  never add Python (banned), and note that an invalid ecosystem rejects the
+  *whole file* rather than failing in its own lane.
+
+The one surviving mention is `CODE_OF_CONDUCT.md` citing the Python Community
+Code of Conduct as an attribution source for the document. That is a citation,
+not a toolchain, and is correct to keep.
+
+The generalisable point: *removing a config entry is not the same as removing a
+dependency from the documentation*, and the second is what contributors read.
+
 === D2 — `STATE.a2ml` describes a project that stopped moving *(OPEN)*
 
 It reports `phase = "maintenance"`, `completion-percentage = 100`,

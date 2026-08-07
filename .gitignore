@@ -44,11 +44,6 @@ erl_crash.dump
 /lib/bs/
 /.bsb.lock
 
-# Python (SaltStack only)
-__pycache__/
-*.py[cod]
-.venv/
-
 # Ada/SPARK
 *.ali
 /obj/
