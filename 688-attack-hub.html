@@ -428,17 +428,72 @@ const CMS=[
  {at:100,k:"final",  m:"%SYS-0-DESWITCH: THE GREAT DESWITCHING HAS BEGUN."}
 ];
 
+/* ═══ determinism ══════════════════════════════════════════
+   rnd() sits at five places in step(), whisper() and the leak. With it,
+   no two runs are comparable, so "this feels too fast" can never be checked and
+   balance cannot be assessed at all — only felt. rnd() replaces all five.
+
+   ?seed=N replays a run exactly. ?fast=N runs the clock faster so a whole game
+   can be watched in well under a minute. Both read location.search, which is a
+   read-only DOM property — no fetch, no eval, no dependency, no build step. The
+   page stays a single self-contained file.
+
+   Unseeded, the seed comes from the clock, so default play is as varied as it
+   was before. reset() re-seeds from the SAME seed, so ?seed=7 replays on
+   restart rather than drifting. */
+function mulberry32(a){
+  return function(){
+    a|=0; a=a+0x6D2B79F5|0;
+    let t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return((t^t>>>14)>>>0)/4294967296;
+  };
+}
+const QS=new URLSearchParams(location.search);
+const PINNED=QS.has("seed");   /* an EXPLICIT seed is a promise to replay; a clock seed is not */
+const SEED=PINNED?(parseInt(QS.get("seed"),10)>>>0):(Date.now()>>>0);
+const FAST=QS.has("fast")?Math.min(40,Math.max(1,+QS.get("fast")||1)):1;
+let rnd=mulberry32(SEED);
+
 /* ═══ state ════════════════════════════════════════════════ */
 let S,speed=1,timer=null,tipEl,adj={};
+/* Two caches. Both are invalidated explicitly rather than time-checked, because
+   at 4× the tick is 125 ms and the failure mode of getting this wrong is not a
+   crash — it is the globe's rAF loop quietly dropping frames, which will get
+   blamed on the renderer. */
+let _mods=null;            /* upgrade+policy coefficients; buy() and addPol() clear it */
+let visDirty=true,_vis={}; /* hearing level per region; any ownership or phase change dirties it */
 REGIONS.forEach(r=>adj[r.id]=[]);
 EDGES.forEach(([a,b])=>{adj[a].push(b);adj[b].push(a)});
 const REG=Object.fromEntries(REGIONS.map(r=>[r.id,r]));
 const $=i=>document.getElementById(i);
 
 function reset(){
+  /* Re-seeding on restart is right for ?seed=N and WRONG without it. Seeding
+     unconditionally from SEED — which is fixed at page load — made every
+     Restart in ordinary play replay the identical run, which the unseeded
+     game never did before. Only a pinned seed promises repeatability. */
+  rnd=mulberry32(PINNED?SEED:(Date.now()>>>0));
+  /* S.cms used to hold three unrelated things at once: the six countermeasure
+     keys, the b15/b40/b70 narrative-beat markers, and a one-shot `floss` flag.
+     They are split here — and S.cms is DELETED rather than aliased, so any
+     reference this change missed throws on the first tick instead of quietly
+     working. That is the loudest verification available in a file with no
+     harness.
+       S.pols  — policies in force. Written only through addPol(), read via pol().
+       S.once  — one-shot markers (beats, floss). Nothing derives from these.
+     st[].o is the owner of a device sitting here, deliberately ORTHOGONAL to
+     st[].s: "none"/"inc" is ground a rival denied you, "lost"/"noc" is the
+     faceless Deswitching. Nothing reads it yet. */
   S={phase:"intro",tick:0,gbps:0,total:0,pp:0,spent:0,att:0,
-     st:Object.fromEntries(REGIONS.map(r=>[r.id,{s:"none",f:0}])),
-     links:new Set(),peak:1,ups:new Set(),cms:new Set(),logs:[],deswitch:0,whispers:0,stormed:false};
+     st:Object.fromEntries(REGIONS.map(r=>[r.id,{s:"none",f:0,o:null,hub:false}])),
+     /* `hub` is the second half of the same plumbing as `o`, and like `o` it is
+        written by nothing yet: it marks a region inside the root-bridge zone
+        that the STP keystone verb creates. Named here so the state shape stops
+        changing once increments start reading it. */
+     links:new Set(),peak:1,ups:new Set(),pols:new Set(),once:new Set(),
+     logs:[],deswitch:0,whispers:0,stormed:false};
+  _mods=null; visDirty=true;
   $("ov").classList.remove("hide");$("ovB").style.display="inline-block";
   $("ovB").textContent="Begin";$("ovT").textContent="688 Attack Hub";
   $("ovP").innerHTML=`You are one unmanaged repeater in a rack nobody has opened since 1998.<br><br>
@@ -452,25 +507,74 @@ const has=u=>S.ups.has(u);
 const inDom=id=>S.st[id].s==="dom";
 const domCount=()=>REGIONS.filter(r=>inDom(r.id)).length;
 
+/* ═══ the four things increment 0 exists to add ════════════ */
+
+/* 1. Policies. pol() must stay a Set probe rather than a scan of anything,
+      because linkCost() calls it and linkCost() runs from showTip() on hover. */
+const pol=k=>S.pols.has(k);
+function addPol(k){S.pols.add(k);_mods=null}
+
+/* 2. Edge keys, normalised at WRITE time. Link keys are a+"|"+b, so a read has
+      to check both orders — paintMap() already does, one place does not, and
+      S.cut in a later increment would inherit and multiply the sharp edge.
+      Normalising once here means a read never has to think about direction.
+      NOTE: linkEl{} is NOT ekey'd. It is keyed by EDGES declaration order and
+      both its writer and its reader use that order; re-keying it would break
+      the lookup for no gain. */
+const ekey=(a,b)=>a<b?a+"|"+b:b+"|"+a;
+
+/* 3. One write path for "whose device sits here". Six places used to assign
+      S.st[id].s directly (pick→dom, link→flood, storm→flood, flood→dom,
+      leak→flood, reclaim→lost), one of them inside a REGIONS.forEach in
+      step(). A desync between the map and the pane would be invisible until
+      they contradicted each other. Callers still set .f themselves — it means
+      something different at each site (0, or max(f,62) for a storm). */
+function setOwn(id,s,o){
+  const st=S.st[id];
+  st.s=s;
+  if(o!==undefined)st.o=o;
+  visDirty=true;
+  return st;
+}
+
+/* 4. Coefficients in one place, so "what does this upgrade actually do" has a
+      single answer and each formula below reads one field. has() is kept for
+      the one-bit behaviour SWITCHES (dnr, pigeon, promis, jumbo) — a boolean
+      is the right expression of a conditional, and forcing those through here
+      would be framework-shaped for the sake of it. */
+function mods(){
+  if(_mods)return _mods;
+  return _mods={
+    hopCap : BASE_HOPS+(has("slot")?3:0)+(has("casc")?5:0)+(has("duplex")?8:0),
+    effPen : has("jumbo")?0.075:0.15,
+    effPol : pol("bcp38")?0.8:1,
+    thru   : (has("cat6")?1.25:1)*(has("sfp")?1.4:1)*(has("dwdm")?1.8:1),
+    attMul : (has("nomgmt")?0.85:1)*(has("unlbl")?0.80:1)*(has("ceil")?0.75:1),
+    linkMul: has("mdix")?0.8:1,
+    linkPol: pol("rpki")?1.5:1,
+    subsea : has("subsea")?0.5:1,
+    flood  : has("tunnel")?1.45:1,
+    leakMul: has("dhcp")?2.2:1,
+    leakPol: pol("port")?0.5:1,
+    stpMul : has("stp")?0.65:1,
+  };
+}
+
 /* ═══ derived ══════════════════════════════════════════════ */
-function hopCap(){return BASE_HOPS+(has("slot")?3:0)+(has("casc")?5:0)+(has("duplex")?8:0)}
+function hopCap(){return mods().hopCap}
 function hopsUsed(){return S.links.size}
 function overHops(){return Math.max(0,hopsUsed()-hopCap())}
 function efficiency(){
-  const p=overHops()*(has("jumbo")?0.075:0.15);
-  return 1/(1+p)*(S.cms.has("bcp38")?0.8:1);
+  const m=mods();
+  return 1/(1+overHops()*m.effPen)*m.effPol;
 }
-function thruMult(){
-  let m=1;if(has("cat6"))m*=1.25;if(has("sfp"))m*=1.4;if(has("dwdm"))m*=1.8;return m;
-}
+function thruMult(){return mods().thru}
 function income(){
   let c=0;REGIONS.forEach(r=>{if(inDom(r.id))c+=r.cap});
   return c*INCOME*thruMult()*efficiency();
 }
 function attGain(){
-  let g=0.028*domCount()+0.055*S.links.size;
-  if(has("nomgmt"))g*=0.85; if(has("unlbl"))g*=0.80; if(has("ceil"))g*=0.75;
-  return g;
+  return (0.028*domCount()+0.055*S.links.size)*mods().attMul;
 }
 function dist(a,b){
   let dx=Math.abs(PX(REG[a].lon)-PX(REG[b].lon)); if(dx>480)dx=960-dx;
@@ -478,10 +582,11 @@ function dist(a,b){
 }
 function ocean(a,b){return dist(a,b)>150}
 function linkCost(a,b){
+  const m=mods();
   let c=LINK_BASE+dist(a,b)*LINK_DIST*REG[b].cap;
-  if(has("mdix"))c*=0.8;
-  if(ocean(a,b)&&has("subsea"))c*=0.5;
-  if(S.cms.has("rpki"))c*=1.5;
+  c*=m.linkMul;
+  if(ocean(a,b))c*=m.subsea;
+  c*=m.linkPol;
   if(S.st[b].s==="lost")c*=2;
   return Math.round(c);
 }
@@ -610,13 +715,25 @@ function applyVis(id){
 }
 const COLOR={none:"#33454e",flood:"#ffab2e",dom:"#5ef08a",lost:"#e0424f"};
 /* what the hub can hear: 2 = carried or next door, 1 = rumoured from transit headers, 0 = dark */
-function visLevel(id){
-  if(S.phase!=="run")return 2;
-  if(S.st[id].s!=="none")return 2;
+/* The SIGNATURE and the answers are unchanged — only the interior is. It used
+   to walk two hops of adjacency per call, and paintMap() calls it once per
+   region plus twice per edge, every frame. Now it is computed once per change
+   and read from a cache. Hearing radius becomes an upgrade axis in a later
+   increment, and that wants one place to widen. */
+function recomputeVis(){
   const hot=n=>{const t=S.st[n].s;return t==="dom"||t==="flood"};
-  if(adj[id].some(hot))return 2;
-  if(adj[id].some(n=>adj[n].some(hot)))return 1;
-  return has("pigeon")?1:0;
+  const run=S.phase==="run", pig=has("pigeon");
+  REGIONS.forEach(r=>{
+    const id=r.id;
+    _vis[id] = !run || S.st[id].s!=="none" || adj[id].some(hot) ? 2
+             : adj[id].some(n=>adj[n].some(hot))               ? 1
+             : pig ? 1 : 0;
+  });
+  visDirty=false;
+}
+function visLevel(id){
+  if(visDirty)recomputeVis();
+  return _vis[id];
 }
 function paintMap(){
   REGIONS.forEach(r=>{
@@ -637,7 +754,7 @@ function paintMap(){
     applyVis(r.id);
   });
   EDGES.forEach(([a,b])=>{
-    const on=S.links.has(a+"|"+b)||S.links.has(b+"|"+a);
+    const on=S.links.has(ekey(a,b));
     const ev=Math.min(visLevel(a),visLevel(b));
     const {base,live}=linkEl[a+"|"+b];
     base.setAttribute("opacity", ev===2?1:ev===1?0.3:0);
@@ -684,7 +801,7 @@ function nearestDom(id){
 /* ═══ actions ══════════════════════════════════════════════ */
 function click(id){
   if(S.phase==="pick"){
-    S.st[id].s="dom";S.phase="run";
+    setOwn(id,"dom","hub");S.phase="run";visDirty=true;
     $("ov").classList.add("hide");
     log(`Power. Twenty ports. Link pulse on port 1 — ${REG[id].ix}, ${REG[id].n}.`,"g2");
     hear("irc #noc",`“installed some old hub as a stopgap in ${REG[id].n}. temporary.”`);
@@ -693,15 +810,15 @@ function click(id){
   if(!canLink(id))return;
   const from=nearestDom(id),cost=linkCost(from,id);
   if(S.gbps<cost){log("Not enough headroom to feed that link.","w");return}
-  S.gbps-=cost;S.links.add(from+"|"+id);
-  S.st[id].s="flood";S.st[id].f=0;
+  S.gbps-=cost;S.links.add(ekey(from,id));
+  setOwn(id,"flood","hub").f=0;
   log(`Link pulse on port ${S.links.size+1} — ${REG[id].ix}. New traffic in the wire.`,"g2");
   if(overHops())log(`Late collisions — you feel them as heat. ${overHops()} hop(s) past the 5-4-3 budget.`,"w");
   paint();
 }
 function buy(u){
   if(S.ups.has(u.id)||S.pp-S.spent<u.c)return;
-  S.ups.add(u.id);S.spent+=u.c;
+  S.ups.add(u.id);S.spent+=u.c;_mods=null;visDirty=true;
   log(`${u.n} — in place.`,"g2");
   paintUps();paint();
 }
@@ -716,7 +833,7 @@ function whisper(){
   const cost=Math.round(40+S.whispers*18), p=0.08+0.12*S.whispers;
   if(S.gbps<cost){log("A lie that convincing needs "+cost+" Gb of headroom.","w");return}
   S.gbps-=cost;
-  const caught=Math.random()<p; S.whispers++;
+  const caught=rnd()<p; S.whispers++;
   if(caught){
     S.att=Math.min(100,S.att+22);
     log("Your forgery contradicts a forgery. They are comparing notes.","d");
@@ -736,7 +853,7 @@ function storm(){
   S.gbps-=cost;S.stormed=true;
   let n=0;
   REGIONS.forEach(r=>{
-    if(!inDom(r.id)&&adj[r.id].some(a=>inDom(a))){S.st[r.id].s="flood";S.st[r.id].f=Math.max(S.st[r.id].f,62);n++}
+    if(!inDom(r.id)&&adj[r.id].some(a=>inDom(a))){const st=setOwn(r.id,"flood","hub");st.f=Math.max(st.f,62);n++}
   });
   S.att=Math.min(100,S.att+30);
   log(`You speak, once, in the only language you have: everything, to everyone, at once. ${n} segment(s) saturate.`,"d");
@@ -745,7 +862,7 @@ function storm(){
 }
 
 /* ═══ loop ═════════════════════════════════════════════════ */
-function start(){stop();if(speed>0)timer=setInterval(step,TICK/speed)}
+function start(){stop();if(speed>0)timer=setInterval(step,TICK/(speed*FAST))}
 function stop(){if(timer)clearInterval(timer);timer=null}
 function step(){
   if(S.phase!=="run")return;
@@ -757,24 +874,24 @@ function step(){
   REGIONS.forEach(r=>{
     const st=S.st[r.id];
     if(st.s!=="flood")return;
-    let rate=FLOOD_BASE*(12/(6+r.cap))*(has("tunnel")?1.45:1)*efficiency();
+    let rate=FLOOD_BASE*(12/(6+r.cap))*mods().flood*efficiency();
     st.f+=rate;
     if(st.f>=100){
-      st.s="dom";st.f=0;
+      setOwn(r.id,"dom","hub");st.f=0;
       log(`${REG[r.id].n} falls silent, then speaks only through you. Domain: ${domCount()}.`,"g2");
     }
   });
 
   /* passive leak */
   if(has("promis")){
-    let lr=0.9*(has("dhcp")?2.2:1)*(S.cms.has("port")?0.5:1);
+    const m=mods(); let lr=0.9*m.leakMul*m.leakPol;
     REGIONS.forEach(r=>{
       if(S.st[r.id].s!=="none"&&S.st[r.id].s!=="lost")return;
       const near=adj[r.id].some(a=>inDom(a));
       if(!near&&!has("pigeon"))return;
       const p=(near?lr:lr*0.25)/100;
-      if(Math.random()<p){
-        S.st[r.id].s="flood";S.st[r.id].f=0;
+      if(rnd()<p){
+        setOwn(r.id,"flood","hub").f=0;
         log(`A stray frame from ${REG[r.id].ix} finds your wire. You repeat it. Flooding.`,"");
       }
     });
@@ -784,32 +901,32 @@ function step(){
   S.att=Math.min(100,S.att+attGain()*0.34);
   if(has("dnr"))S.att=Math.max(0,S.att-0.09);
   BEATS.forEach(([th,src,m])=>{const k="b"+th;
-    if(S.att>=th&&!S.cms.has(k)){S.cms.add(k);hear(src,m)}});
-  if(Math.random()<0.017){
+    if(S.att>=th&&!S.once.has(k)){S.once.add(k);hear(src,m)}});
+  if(rnd()<0.017){
     const pool=S.att>70?H3():S.att>35?H2:H1;
-    const c=pool[Math.floor(Math.random()*pool.length)];hear(c[0],c[1]);
+    const c=pool[Math.floor(rnd()*pool.length)];hear(c[0],c[1]);
   }
 
   /* countermeasures */
   CMS.forEach(c=>{
-    if(S.att>=c.at&&!S.cms.has(c.k)){
-      S.cms.add(c.k);log(c.m,c.k==="final"?"d":"w");
+    if(S.att>=c.at&&!pol(c.k)){
+      addPol(c.k);log(c.m,c.k==="final"?"d":"w");
       if(c.k==="final")S.deswitch=1;
     }
   });
 
   /* reclamation */
-  if(S.cms.has("switch")){
-    let p=0.0035*(S.cms.has("manrs")?2:1)*(S.deswitch?7:1)*(has("stp")?0.65:1);
+  if(pol("switch")){
+    let p=0.0035*(pol("manrs")?2:1)*(S.deswitch?7:1)*mods().stpMul;
     p*=1+S.att/160;
     REGIONS.forEach(r=>{
       if(!inDom(r.id))return;
       if(domCount()<=1&&!S.deswitch)return;
-      if(Math.random()<p){
-        S.st[r.id].s="lost";
+      if(rnd()<p){
+        setOwn(r.id,"lost","noc");
         [...S.links].forEach(k=>{if(k.split("|").includes(r.id))S.links.delete(k)});
         log(`${REG[r.id].n} goes quiet. A switch speaks there now — and only to whom it must.`,"d");
-        if(!S.cms.has("floss")){S.cms.add("floss");hear("change ctrl",`“cutover complete at ${REG[r.id].ix}. old repeater left in rack.”`)}
+        if(!S.once.has("floss")){S.once.add("floss");hear("change ctrl",`“cutover complete at ${REG[r.id].ix}. old repeater left in rack.”`)}
       }
     });
   }
@@ -822,7 +939,7 @@ function step(){
   paint();
 }
 function over(win){
-  stop();S.phase="done";
+  stop();S.phase="done";visDirty=true;
   const ov=$("ov");ov.classList.remove("hide");
   $("ovB").style.display="inline-block";$("ovB").textContent="Restart";
   if(win){

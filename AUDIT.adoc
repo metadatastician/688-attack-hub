@@ -91,6 +91,30 @@ claimed about 688 Attack Hub in particular.
   loads with no console errors. Those four are evidence. "The globe is
   correct" is not a claim this repo makes, and there is no automated visual
   or regression test for any of it — the checks above were run once, by hand.
+* *The simulation* now has one mechanical check, and its scope is narrow enough
+  to state exactly. `tests/differential/run.sh` runs the game's logic against a
+  git baseline under a fixed seed and diffs the state trajectory tick by tick
+  (throughput, attention, port points, per-region state and flood fraction,
+  links, upgrades, policies, hearing level). It answers one question — *did
+  this change alter how the game plays?* — and nothing else.
++
+It is *not* coverage, *not* a correctness proof, and *not* wired to CI: it
+needs `bun` and a baseline ref, and choosing the baseline is a judgement. It
+does not touch rendering, input, projection or the globe.
++
+What it is worth is bounded by what the scripted run actually executes, so it
+reports that too. Two complementary scenarios are needed: `PLAY` reaches all 6
+policies but only ~11 of 18 upgrades before a run ends, and `COVER` grants
+headroom to reach 18/18 but wins too early to trigger the later policies. Read
+both numbers. Verified failing on eleven deliberately planted defects, because
+a check that cannot fail is worse than no check; two of those eleven were inert
+until the harness was corrected, which is the reason the coverage line exists.
++
+One measured limitation worth recording: a perturbation smaller than the RNG
+can resolve is invisible to it. Changing a leak coefficient by 2% was not
+detected — not because the code was unexecuted, but because no `rnd()` draw
+ever landed in the shifted band. Large perturbations of the same line are
+caught immediately. Do not read a pass as "this coefficient is exactly right".
 * A coastline polygon straddling the limb is closed along the chord between
   its horizon crossings rather than along the limb arc. This is a known and
   deliberate imperfection, visible at the edge of the disc; see
