@@ -20,11 +20,17 @@ and no external asset — everything the browser needs is in that one file.
 └── (the documentation set linked from README.md)
 ```
 
-There is no `src/`, no `tests/`, no build tooling. Unlike this repo's sibling
+There is no `src/` and no build tooling. Unlike this repo's sibling
 `f19-stealth-glider` (which has a verification ledger of `src/verify*.mjs`
 scripts backing formal geometric claims), 688 Attack Hub makes no such claims
 — it's an idle/strategy toy, not a puzzle with a provable solution. See
 [`AUDIT.adoc`](./AUDIT.adoc) for what is and isn't asserted about it.
+
+There is now a `tests/differential/`, added with the first Phase C increment.
+It is **not** a verification ledger and not a gate: it runs the simulation
+against a git baseline under a fixed seed and diffs the state trajectory tick
+by tick, which answers exactly one question — *did this refactor change how the
+game plays?* It needs `bun` and a baseline ref, so CI does not run it.
 
 ## Data model (inside `688-attack-hub.html`)
 
@@ -45,6 +51,52 @@ scripts backing formal geometric claims), 688 Attack Hub makes no such claims
 - **`S`** (state) — the live game state: phase, tick, throughput (`gbps`),
   port points (`pp`/`spent`), attention (`att`), installed regions, and active
   links (`S.links`).
+
+  `S` carries two sets that used to be one. `S.cms` held the six countermeasure
+  keys, the `b15`/`b40`/`b70` narrative-beat markers and a one-shot `floss`
+  flag all together, so "is a policy in force" and "have we said this line yet"
+  were the same question. They are now **`S.pols`** (policies in force, written
+  only through `addPol()`, read through `pol()`) and **`S.once`** (one-shot
+  markers, which nothing derives from). `S.cms` was deleted rather than
+  aliased, so any missed reference throws on the first tick.
+
+  Each region in `S.st` also carries **`o`**, the owner of whatever device sits
+  there, deliberately orthogonal to `s`. One field cannot do both jobs:
+  `s:"none", o:"inc"` is ground something else denied you, while `s:"lost",
+  o:"noc"` is the faceless Deswitching. Nothing reads `o` yet.
+
+### Single write paths
+
+Three things now have exactly one way in, because each had several and a
+disagreement between them would have been invisible until the map contradicted
+the pane:
+
+- **`setOwn(id, s, o)`** — the only writer of `S.st[].s`. Six places assigned it
+  directly (pick→dom, link→flood, storm→flood, flood→dom, leak→flood,
+  reclaim→lost), one of them inside a `REGIONS.forEach` in `step()`.
+- **`ekey(a, b)`** — normalises link keys at write time. They were `a+"|"+b`, so
+  every read had to check both orders; `paintMap()` did, and the deletion path
+  worked only because it split the key. `linkEl{}` is deliberately **not**
+  ekey'd — it is keyed by `EDGES` declaration order, consistently, at both ends.
+- **`mods()`** — every upgrade and policy coefficient, memoised, cleared by
+  `buy()` and `addPol()`. `has()` is kept for the one-bit behaviour switches
+  (`dnr`, `pigeon`, `promis`, `jumbo`), because a boolean is the right
+  expression of a conditional.
+
+`visLevel(id)` keeps its exact signature and answers, but is now computed once
+per change into `S`-adjacent cache rather than walking two hops of adjacency on
+every one of its calls — `paintMap()` calls it once per region plus twice per
+edge, every frame.
+
+### Determinism
+
+`Math.random()` appeared at five sites, so no two runs were comparable and
+"balance" could not be assessed at all, only felt. All five now go through
+`rnd()`, a seeded generator. **`?seed=N`** replays a run exactly (including
+across restart); **`?fast=N`** speeds the clock so a full run can be watched in
+under a minute. Both read `location.search`, a read-only DOM property — no
+fetch, no eval, no dependency, and the page stays one self-contained file.
+Unseeded, the seed comes from the clock, so ordinary play is as varied as before.
 
 ## Render / update loop
 
