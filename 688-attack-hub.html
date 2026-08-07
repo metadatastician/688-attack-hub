@@ -450,7 +450,8 @@ function mulberry32(a){
   };
 }
 const QS=new URLSearchParams(location.search);
-const SEED=QS.has("seed")?(parseInt(QS.get("seed"),10)>>>0):(Date.now()>>>0);
+const PINNED=QS.has("seed");   /* an EXPLICIT seed is a promise to replay; a clock seed is not */
+const SEED=PINNED?(parseInt(QS.get("seed"),10)>>>0):(Date.now()>>>0);
 const FAST=QS.has("fast")?Math.min(40,Math.max(1,+QS.get("fast")||1)):1;
 let rnd=mulberry32(SEED);
 
@@ -468,7 +469,11 @@ const REG=Object.fromEntries(REGIONS.map(r=>[r.id,r]));
 const $=i=>document.getElementById(i);
 
 function reset(){
-  rnd=mulberry32(SEED);          /* ?seed=N must replay on restart, not drift */
+  /* Re-seeding on restart is right for ?seed=N and WRONG without it. Seeding
+     unconditionally from SEED — which is fixed at page load — made every
+     Restart in ordinary play replay the identical run, which the unseeded
+     game never did before. Only a pinned seed promises repeatability. */
+  rnd=mulberry32(PINNED?SEED:(Date.now()>>>0));
   /* S.cms used to hold three unrelated things at once: the six countermeasure
      keys, the b15/b40/b70 narrative-beat markers, and a one-shot `floss` flag.
      They are split here — and S.cms is DELETED rather than aliased, so any
@@ -482,6 +487,10 @@ function reset(){
      faceless Deswitching. Nothing reads it yet. */
   S={phase:"intro",tick:0,gbps:0,total:0,pp:0,spent:0,att:0,
      st:Object.fromEntries(REGIONS.map(r=>[r.id,{s:"none",f:0,o:null,hub:false}])),
+     /* `hub` is the second half of the same plumbing as `o`, and like `o` it is
+        written by nothing yet: it marks a region inside the root-bridge zone
+        that the STP keystone verb creates. Named here so the state shape stops
+        changing once increments start reading it. */
      links:new Set(),peak:1,ups:new Set(),pols:new Set(),once:new Set(),
      logs:[],deswitch:0,whispers:0,stormed:false};
   _mods=null; visDirty=true;
