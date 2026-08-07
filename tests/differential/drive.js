@@ -26,6 +26,14 @@ const ORDER = [
 // a diff for the refactor itself rather than for any behaviour change.
 const POLKEYS  = ["port","switch","bcp38","rpki","manrs","final"];
 const ONCEKEYS = ["b15","b40","b70","floss"];
+// Explicit codepoint comparator, and the reason is not style. Default .sort()
+// is lexicographic by UTF-16 code unit, which is what we want — but the obvious
+// "fix" a linter nudges you toward, .sort((a,b)=>a.localeCompare(b)), is
+// LOCALE-SENSITIVE. In a harness whose entire purpose is byte-identical output
+// across machines, ordering that depends on the environment's locale is the one
+// thing it must never do. Saying it explicitly stops that edit being made later.
+const byCodepoint = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+
 const inPol  = k => (typeof S.pols !== "undefined") ? S.pols.has(k) : S.cms.has(k);
 const inOnce = k => (typeof S.once !== "undefined") ? S.once.has(k) : S.cms.has(k);
 
@@ -46,8 +54,8 @@ function fingerprint() {
     // ekey() normalises a|b vs b|a at write time — that IS one of the changes
     // under test, and it is representation, not behaviour. Normalise both sides
     // so the comparison tests the simulation rather than the key spelling.
-    [...S.links].map(k => k.split("|").sort().join("|")).sort().join("+"),
-    [...S.ups].sort().join("+"),
+    [...S.links].map(k => k.split("|").sort(byCodepoint).join("|")).sort(byCodepoint).join("+"),
+    [...S.ups].sort(byCodepoint).join("+"),
     POLKEYS.filter(inPol).join("+"),
     ONCEKEYS.filter(inOnce).join("+"),
     S.deswitch, S.whispers, S.stormed ? 1 : 0,
@@ -86,7 +94,7 @@ for (let i = 1; i <= 900; i++) {
   if (S.tick === 260 && !S.stormed) storm();
   // link outward on a fixed cadence, always to the lowest-id linkable region
   if (S.tick % 7 === 0) {
-    const cands = REGIONS.map(r => r.id).filter(canLink).sort();
+    const cands = REGIONS.map(r => r.id).filter(canLink).sort(byCodepoint);
     if (cands.length) click(cands[0]);
   }
   step();
