@@ -53,6 +53,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Path traversal in the new local dev server** (`scripts/serve.js`), reported
+  by gitar-bot on review and confirmed exploitable before fixing. The guard did
+  `ROOT + path` then `.startsWith(ROOT)`, which compares strings without
+  resolving `..`. Two subtleties made it easy to get wrong: `new URL()` decodes
+  *and* normalises `%2e%2e`, so the obvious proof-of-concept collapses
+  harmlessly — but encoding the **slash** instead (`/..%2f..%2f`) survives
+  normalisation, and `decodeURIComponent` runs afterwards, producing `../../`
+  once the check is already behind you. Verified: the old code answered `200`
+  with the contents of `/etc/passwd`; the new code resolves the path first and
+  answers `403`, while `/` and `/AUDIT.adoc` still serve.
 - **`CONTRIBUTING.md` was template boilerplate for a different repository.** It
   began mid-code-block, told contributors to run `nix develop` and
   `just check # or: cargo check / mix compile`, and documented a directory tree
