@@ -7,7 +7,7 @@
 [metadata]
 project = "688 Attack Hub"
 version = "0.1.0"
-last-updated = "2026-07-21"
+last-updated = "2026-08-07"
 status = "active"
 
 [project-context]
@@ -17,10 +17,14 @@ language = "javascript (inline, no modules)"
 runtime = "any modern browser"
 dependencies = "none"
 distribution = "single self-contained 688-attack-hub.html at the repo root"
-completion-percentage = 100
+completion-percentage = 100   # of the SHIPPED toy (v0.1). Phase C is a redesign beyond it;
+                              # see the Phase C milestones below for that progress.
 
 [position]
-phase = "maintenance"      # design | implementation | testing | maintenance | archived
+phase = "implementation"   # design | implementation | testing | maintenance | archived
+                           # Phase C (reactive rivals, verb-granting upgrades) is in flight.
+                           # It was "maintenance" until 2026-08-07; the shipped toy is done,
+                           # the redesign is not.
 maturity = "beta"          # experimental | alpha | beta | production | lts
 
 [route-to-mvp]
@@ -28,24 +32,40 @@ milestones = [
   { name = "Import game + full RSR documentation set", completion = 100 },
   { name = "ci.yml (integrity checks) + pages.yml (GitHub Pages deploy)", completion = 100 },
   { name = "Orthographic globe view behind a flat/globe toggle", completion = 100 },
-  { name = "Roadmap: globe polish (drag-to-rotate, tilt, glow) — not started", completion = 0 },
-  { name = "Roadmap: PAN/LAN/MAN/WAN scale ladder — design only, not started", completion = 0 },
-  { name = "Roadmap: engine migration to Bevy/Fyrox, if ever pursued (not started)", completion = 0 },
+  { name = "Drag-to-rotate + keyboard rotation for the globe", completion = 100 },
+  { name = "Seeded runs (?seed=) and fast clock (?fast=) — balance is now assessable", completion = 100 },
+  { name = "Differential test harness against a git baseline", completion = 100 },
+  { name = "Phase C inc 0: plumbing (S.pols/S.once, setOwn, ekey, mods, cached visLevel)", completion = 100 },
+  { name = "Phase C inc 1: THE INCUMBENT — first reactive rival, replaces global reclamation", completion = 0 },
+  { name = "Phase C inc 2: THE COMPLIANCE LEAD — CMS dies here; gate is grep -c 'S.cms|CMS' = 0", completion = 0 },
+  { name = "Phase C inc 3: THE CONSULTANT + S.cut — highest softlock risk", completion = 0 },
+  { name = "Phase C inc 4-8: Adjacent pane, upgrade merges, keystone verbs, tone pass", completion = 0 },
+  { name = "Roadmap: PAN/LAN/MAN/WAN scale ladder — design only, deliberately deferred to step 2", completion = 0 },
 ]
 
 [blockers-and-issues]
-# No active blockers
+# Full register with evidence: DEBT.adoc (authoritative on what is OWED;
+# AUDIT.adoc remains authoritative on what is VERIFIED).
+blockers = [
+  { id = "I1", kind = "cicd", state = "fix-open-as-pr-18", detail = "a reusable-caller entry in actions.lock's `dependencies:` map instead of `workflows:` made the lockfile unparseable, so ci/pages/Secret Scanner all startup_failed together" },
+  { id = "L1", kind = "licence", state = "flag-only", detail = "688-attack-hub.html — the entire product — carries no SPDX header or copyright line, while README claims AGPL-3.0-or-later" },
+  { id = "L2", kind = "licence", state = "flag-only", detail = "three licences in use (AGPL/CC-BY-SA/MPL) with no REUSE.toml or dep5; package.json and CITATION.cff cannot carry comments and so are covered by nothing" },
+  { id = "I3", kind = "cicd", state = "not-understood", detail = "SonarCloud fails on PR #17 and passes on #18; the finding detail has not been read" },
+  { id = "P2", kind = "test", state = "open", detail = "the differential harness is not wired to CI; a golden-file variant would be" },
+]
 
 [critical-next-actions]
 actions = [
-  "Confirm ci.yml and pages.yml both go green on the first push to main",
-  "Confirm the published GitHub Pages site is playable and matches the committed file",
+  "Merge PR #18 (lockfile) — until then every workflow in the repo startup_fails",
+  "Merge PR #17 (Phase C increment 0), then rebase and confirm the integrity gate reports",
+  "Decide L1/L2: licence header on the game file, and a REUSE mapping. Owner call, not automatable.",
+  "Phase C increment 1 — THE INCUMBENT. Design-doc line refs are stale by ~+109; work from the file.",
 ]
 
 [maintenance-status]
-last-run-utc = "never"
-last-result = "unknown"  # unknown | pass | warn | fail
-open-warnings = 0
+last-run-utc = "2026-08-07"
+last-result = "warn"     # unknown | pass | warn | fail — integrity gate passes; lockfile blocks CI
+open-warnings = 5
 open-failures = 0
 
 [ecosystem]

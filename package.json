@@ -7,9 +7,9 @@
   "author": "Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>",
   "private": false,
   "scripts": {
-    "serve": "python3 -m http.server 8000"
+    "serve": "bun run scripts/serve.js"
   },
   "engines": {
-    "node": ">=18"
+    "bun": ">=1.0"
   }
 }

@@ -1,18 +1,22 @@
 # SPDX-License-Identifier: MPL-2.0
 # Dependabot configuration for 688 Attack Hub.
 #
-# Pruned to the ecosystems this repo actually has. The RSR template ships every
-# common ecosystem with the instruction "remove unused ones for your project";
-# nothing removed them, so `pip` and `nix` failed on every scheduled run with
-# "Dependabot encountered an error performing the update" — there is no Python
-# manifest and no .nix file here. `cargo` and `mix` had no manifest either.
+# Two ecosystems, because two is all this repo can have: github-actions (the
+# workflows) and npm (package.json, which declares no dependencies at all).
 #
-# This repo is one self-contained HTML file plus a package.json whose only
-# script is `python3 -m http.server`. Two ecosystems are all it can have:
-# github-actions (the two workflows) and npm (package.json).
+# The RSR template shipped every common ecosystem with the instruction "remove
+# unused ones for your project", and nothing ever removed them. Four were wrong
+# here — two because no manifest existed, and two on policy:
 #
-# Nix is retired estate-wide in favour of Guix, so a `nix` block is wrong in
-# every repo, not just this one.
+#   Nix     — retired estate-wide in favour of Guix. Wrong in every repo, not
+#             just this one, so never re-add it.
+#   Python  — banned estate-wide with no exceptions. Where a real language is
+#             needed the choices are Rust, Julia, AffineScript or Elixir as the
+#             job demands; this repo needs none of them.
+#
+# An invalid ecosystem does not fail quietly in its own lane: it rejects the
+# WHOLE file, so the valid entries stop updating too. Keep this list minimal
+# and keep it correct.
 
 version: 2
 updates:

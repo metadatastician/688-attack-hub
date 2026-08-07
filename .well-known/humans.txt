@@ -7,8 +7,8 @@ Contact: j.d.a.jewell@open.ac.uk
 From: United Kingdom
 
 /* SITE */
-Last update: 2026-07-21
+Last update: 2026-08-07
 Standards: RSR (Rhodium Standard Repository)
-License: AGPL-3.0-or-later (code and docs)
+License: AGPL-3.0-or-later (game + workflows) · CC-BY-SA-4.0 (docs) · MPL-2.0 (scripts)
 Components: single self-contained HTML/CSS/JS file, no dependencies
-Tools: none required — open in any modern browser
+Tools: none required — open in any modern browser. bun only for the optional local server and the differential test.

@@ -8,8 +8,12 @@ idle/strategy toy. Read this first, then
 `.machine_readable/descriptiles/STATE.a2ml`, then `README.md`.
 
 The repository is a single self-contained HTML file with no build system, no
-package registry dependency, and no runtime service. There is no source tree
-to navigate — everything is in `688-attack-hub.html`.
+package registry dependency, and no runtime service. Everything the *game* is
+lives in `688-attack-hub.html`; there is no source tree to navigate.
+
+Two small directories sit beside it and are not the game: `tests/differential/`
+(a harness that diffs the simulation against a git baseline) and `scripts/`
+(an optional local server). Neither is loaded by the page.
 
 ## Where things live
 
@@ -17,8 +21,31 @@ to navigate — everything is in `688-attack-hub.html`.
   `UPGRADES`, `CMS`), state (`S`), and the render/update loop (`step`,
   `paintMap`, `paintUps`, `click`, `buy`). See `ARCHITECTURE.md` for the full
   breakdown.
+
+  Four things have exactly one way in, and going around them is a bug:
+  `setOwn(id, s, o)` is the only writer of region state; `ekey(a, b)` is the
+  only way to build a link key; `addPol()`/`pol()` are the only way to write or
+  read a policy; `mods()` holds every upgrade and policy coefficient. `has()`
+  is still correct for the one-bit switches (`dnr`, `pigeon`, `promis`,
+  `jumbo`).
+
+  `S.cms` no longer exists — it was split into `S.pols` and `S.once` and
+  deleted rather than aliased, so a stale reference throws rather than
+  silently working. Do not reintroduce it.
+
+  All randomness goes through `rnd()`, seeded. Do not call `Math.random()`:
+  `?seed=N` replaying exactly is the only reason balance can be assessed at
+  all.
+
+- `tests/differential/` — runs the simulation against a git baseline under one
+  seed and diffs the trajectory. Run it after any change that is supposed to
+  preserve behaviour. It is not a gate and not coverage; `AUDIT.adoc` records
+  what it cannot see.
+- `DEBT.adoc` — what is OWED, by kind, with evidence. `AUDIT.adoc` is
+  authoritative on what is VERIFIED; these two are complementary and neither
+  substitutes for the other.
 - `README.md`, `ARCHITECTURE.md`, `EXPLAINME.adoc`, `AUDIT.adoc`,
-  `AFFIRMATION.adoc`, `GOVERNANCE.adoc` — the human documentation set.
+  `AFFIRMATION.adoc`, `GOVERNANCE.md` — the human documentation set.
   **`AUDIT.adoc` is authoritative on what is and isn't verified** — this
   repo makes deliberately fewer formal claims than its sibling
   `f19-stealth-glider`, and should not be made to sound more rigorously

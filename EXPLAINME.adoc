@@ -19,7 +19,9 @@ How this is checked:
 * `ci.yml`'s `integrity` job asserts the file exists and is well-formed HTML
   on every push.
 * `package.json` has no `dependencies` — only a `serve` convenience script
-  wrapping `python3 -m http.server`, which is optional, not required.
+  running a ~20-line Bun server (`scripts/serve.js`), which is optional, not
+  required. It wrapped `python3 -m http.server` until 2026-08-07; Python is
+  banned estate-wide.
 
 Caveat: none known. This is the simplest claim in the repo and the easiest to
 falsify — open the file in any browser.

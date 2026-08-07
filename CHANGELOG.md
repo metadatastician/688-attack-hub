@@ -13,6 +13,85 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Seeded, replayable runs.** `?seed=N` replays a run exactly, including
+  across restart; `?fast=N` runs the clock up to 40× so a whole game can be
+  watched in under a minute. Both read `location.search`, a read-only DOM
+  property — no fetch, no eval, no dependency, still one self-contained file.
+  Unseeded, the seed comes from the clock, so ordinary play is as varied as it
+  was. This matters beyond convenience: `Math.random()` sat at five sites, so
+  no two runs were comparable and balance could not be assessed at all, only
+  felt.
+- **A differential test** at `tests/differential/`. It runs the simulation
+  against a git baseline under the same seed and diffs the state trajectory
+  tick by tick, which is the only way to check a refactor's claim of "no
+  behaviour change" in a file with no other harness. Not a gate and not
+  coverage — it needs `bun` and a baseline ref, and `AUDIT.adoc` records what
+  it cannot see.
+- **`DEBT.adoc`**, a debt register by kind (licence, documentation, code,
+  tests/proof, CI/CD), with evidence for every entry and an explicit
+  distinction between what is owed, what is flagged for the owner, and what is
+  a deliberate limitation rather than a TODO.
+
+### Changed
+
+- **`S.cms` split into `S.pols` and `S.once`.** It had been holding three
+  unrelated things — the six countermeasure keys, the narrative-beat markers,
+  and a one-shot flag — so "is a policy in force" and "have we said this line
+  yet" were the same question. `S.cms` was deleted rather than aliased, so any
+  missed reference throws on the first tick.
+- **One write path for three things that had several**: `setOwn()` is now the
+  only writer of region state (six sites assigned it directly, one inside a
+  loop in `step()`); `ekey()` normalises link keys at write time, so reads no
+  longer have to check both orders; `mods()` holds every upgrade and policy
+  coefficient in one memoised place. `has()` is kept for the one-bit behaviour
+  switches, because a boolean is the right expression of a conditional.
+- **`package.json` no longer runs Python.** `serve` was
+  `python3 -m http.server`; Python is banned estate-wide with no exceptions.
+  Replaced with `bun run scripts/serve.js`, which needs no dependency and keeps
+  the repo's "nothing to install" claim true. You still do not need it — the
+  file opens from disk.
+
+### Fixed
+
+- **Path traversal in the new local dev server** (`scripts/serve.js`), reported
+  by gitar-bot on review and confirmed exploitable before fixing. The guard did
+  `ROOT + path` then `.startsWith(ROOT)`, which compares strings without
+  resolving `..`. Two subtleties made it easy to get wrong: `new URL()` decodes
+  *and* normalises `%2e%2e`, so the obvious proof-of-concept collapses
+  harmlessly — but encoding the **slash** instead (`/..%2f..%2f`) survives
+  normalisation, and `decodeURIComponent` runs afterwards, producing `../../`
+  once the check is already behind you. Verified: the old code answered `200`
+  with the contents of `/etc/passwd`; the new code resolves the path first and
+  answers `403`, while `/` and `/AUDIT.adoc` still serve.
+- **`CONTRIBUTING.md` was template boilerplate for a different repository.** It
+  began mid-code-block, told contributors to run `nix develop` and
+  `just check # or: cargo check / mix compile`, and documented a directory tree
+  — `src/`, `lib/`, `extensions/`, `plugins/`, `tools/`, `examples/`, `spec/`,
+  `flake.nix` — none of which exists, and which `ARCHITECTURE.md` explicitly
+  says does not exist. It also linked four files by the wrong name. Rewritten
+  against the actual tree, with the Tri-Perimeter framework preserved and mapped
+  onto real paths.
+- **Nix and Python removed from the last four places they survived.** Pruning
+  the `nix` and `pip` entries from `dependabot.yml` in #12 had been mistaken for
+  the job being done; the vocabulary was still in `CONTRIBUTING.md` (recommending
+  `nix develop`), `EXPLAINME.adoc` (describing the Python server),
+  `.gitignore` (a Python section) and `dependabot.yml`'s own comments. Nix is
+  retired estate-wide in favour of Guix and Python is banned outright; where a
+  real language is needed the choices are Rust, Julia, AffineScript or Elixir as
+  the job demands, and this repo needs none of them.
+- **A malformed lockfile line was taking out every workflow in the repo.** A
+  reusable-caller entry had been written into `actions.lock`'s `dependencies:`
+  map instead of `workflows:`; every other value there is an object describing
+  a pinned action, so a bare list made the file unparseable, and an unparseable
+  lockfile is rejected before any job starts. `ci`, `pages` and `Secret
+  Scanner` all went red in the same commit while nothing about them changed.
+- **Six files linked to a `GOVERNANCE.adoc` that does not exist** — the file is
+  `GOVERNANCE.md`. Every relative link in the documentation set now resolves.
+- **Two funding files contradicted each other.** `.github/funding.yml` said
+  `github: metadatastician`; `.github/FUNDING.yml` said in prose that no
+  funding is solicited. GitHub honours the uppercase name, so the lowercase one
+  was an inert contradiction. Removed.
+
 - **Orthographic globe view**, behind a FLAT / GLOBE toggle in the footer.
   Flat remains the default. Hand-rolled — no library, no build step, no
   network call — because the map data was already spherical and only the
@@ -50,9 +129,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   grammar fixes the sweep did make; reverted the reporting SLA to this repo's own
   prior "5 business days", because promising 48-hour response on a one-file toy
   is the kind of aspirational overclaim `AUDIT.adoc` exists to prevent. Also
-  fixed "a maintainers member" (ungrammatical in both versions), dropped an
-  "Anonymous Form" row whose link never existed, and replaced references to a
-  "Perimeter" access model that is defined nowhere in this repo.
+  fixed "a maintainers member" (ungrammatical in both versions), and dropped an
+  "Anonymous Form" row whose link never existed.
+
+  **Corrected shortly afterwards by #15.** This change also stripped references
+  to a "Perimeter" access model, on the stated grounds that it was "defined
+  nowhere in this repo". That was wrong, and the reasoning was the interesting
+  part of the error: a local grep found nothing, and absence locally was taken
+  as absence entirely. The Tri-Perimeter Contribution Framework is an
+  estate-wide model. #15 restored it and defined it properly in
+  `CODE_OF_CONDUCT.md`; `CONTRIBUTING.md` now maps the three perimeters onto
+  this repo's real paths.
 - **Removed the swept-in `.github/workflows/codeql.yml`.** Every run of it failed
   with `Code Scanning could not process the submitted SARIF file: CodeQL analyses
   from advanced configurations cannot be processed when the default setup is
