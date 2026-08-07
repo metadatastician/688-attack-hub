@@ -1,0 +1,293 @@
+= 688 Attack Hub — Debt Register
+:toc: macro
+:toclevels: 2
+
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+
+Known debt, by kind, with evidence. Every entry says what is wrong, how it is
+known, and what would clear it. Anything that could not be checked is listed as
+unchecked rather than assumed clean.
+
+Stamped *2026-08-07*. `AUDIT.adoc` remains authoritative on what is verified;
+this file is authoritative on what is *owed*.
+
+toc::[]
+
+== How to read this
+
+Three states, and the distinction matters:
+
+[cols="1,4"]
+|===
+| *OPEN*      | Confirmed by evidence recorded here. Needs doing.
+| *FLAG-ONLY* | Confirmed, but this repo may not fix it unilaterally — licence
+                changes need owner approval, per estate policy. Recorded, not actioned.
+| *ACCEPTED*  | A real limitation, deliberately not being fixed. The reason is given.
+                Not a TODO.
+|===
+
+A thing being absent is only debt if something claims it exists. Several
+absences here are deliberate design and appear under ACCEPTED.
+
+== Licence debt
+
+[NOTE]
+====
+*Everything in this section is FLAG-ONLY.* Estate policy is that licence
+changes are manual and owner-approved: never sweep SPDX headers in bulk, never
+generate a licence-change PR unattended, never touch third-party or vendored
+licence text. These are reported so a human can decide, and deliberately not
+acted on.
+====
+
+=== L1 — the game file carries no licence header at all *(FLAG-ONLY)*
+
+`688-attack-hub.html` is the entire product — 48,775 bytes, the thing that is
+deployed and played — and it contains no `SPDX-License-Identifier` and no
+copyright line anywhere in the file. `README.md` states that "code and
+documentation are AGPL-3.0-or-later", so the claim exists in prose and is
+absent from the artefact.
+
+Evidence: `grep -i 'spdx\|copyright\|licen[cs]e' 688-attack-hub.html` returns
+nothing.
+
+Clearing it: a two-line HTML comment after the doctype. Trivial to do, but it
+is a licence decision on the primary artefact, so it waits for the owner.
+
+=== L2 — three licences in use, no machine-readable mapping *(FLAG-ONLY)*
+
+The tree genuinely uses three, and the split is coherent:
+
+[cols="1,1,3"]
+|===
+| `AGPL-3.0-or-later` | 33 files | code, workflows, AI manifests
+| `CC-BY-SA-4.0`      | 14 files | human documentation
+| `MPL-2.0`           | 6 files  | scripts and launchers
+|===
+
+`LICENSES/` correctly holds all three texts. What is missing is any
+machine-readable mapping — no `REUSE.toml`, no `.reuse/dep5`. This is not
+pedantry: `package.json`, `CITATION.cff` and `.editorconfig` *cannot* carry
+comment headers, so a mapping file is the only mechanism by which they can ever
+be covered. Today they are covered by nothing.
+
+Evidence: no `REUSE.toml`, no `.reuse/`, no `dep5` in the tree; those three
+files return no SPDX match.
+
+=== L3 — the licence split is undocumented for humans *(FLAG-ONLY)*
+
+`README.md` says "Code and documentation are AGPL-3.0-or-later", which is true
+of the code and *not* true of the documentation — the docs are CC-BY-SA-4.0 and
+the scripts are MPL-2.0. A contributor reading only the README would get the
+wrong answer for two of the three.
+
+== Documentation debt
+
+=== D1 — `package.json` ran a banned toolchain *(FIXED in this commit)*
+
+[source,json]
+----
+"scripts": { "serve": "python3 -m http.server 8000" }   // was
+"scripts": { "serve": "bun run scripts/serve.js" }      // now
+----
+
+Python is banned estate-wide with no exceptions
+(`standards/LANGUAGE-POLICY.adoc` §3), and `README.md` documented this as the
+supported way to serve the game locally — so a banned tool was both committed
+and recommended.
+
+Replaced with a ~20-line Bun server (`scripts/serve.js`, plain JavaScript —
+TypeScript is banned too). Bun is the estate's first-choice runtime, so this
+adds no dependency and keeps the repo's "nothing to install" claim true.
+Verified working: `/` serves the game, a known path serves, an unknown path
+404s. `engines` moved from `node` to `bun` to match.
+
+You still do not need it. The file opens from disk.
+
+=== D2 — `STATE.a2ml` describes a project that stopped moving *(OPEN)*
+
+It reports `phase = "maintenance"`, `completion-percentage = 100`,
+`last-updated = "2026-07-21"`, and `[blockers-and-issues] # No active
+blockers`. All four were true in July and none is true now: Phase C is in
+flight, the increment sequence is nine steps long, and main has had a
+CI-blocking defect.
+
+Partly corrected in this commit. It will go stale again — that is the nature of
+a hand-maintained state file, and worth knowing rather than pretending
+otherwise.
+
+=== D3 — the design doc's line references are stale by roughly +109 *(ACCEPTED)*
+
+`docs/design/2026-07-22-scale-ladder-and-opponents.md` cites line numbers
+throughout, and every one is off by about +109 (about +155 for `visLevel`).
+Anyone following it must work from the current file.
+
+Accepted rather than fixed: the numbers will drift again with every increment,
+and re-anchoring them each time is busywork. The document now says so at the
+top. The fix, if it is ever worth it, is to cite *symbols* rather than lines.
+
+=== D4 — no rendered documentation site *(ACCEPTED)*
+
+GitHub Pages serves the game, not the docs. The documentation set is read on
+GitHub or in the repo. For a single-file toy with eleven documents this is the
+right trade; a docs site would be more infrastructure than the thing it
+documents.
+
+== Code debt
+
+=== C1 — thirteen of eighteen upgrades are passive scalars *(OPEN, by design-doc)*
+
+The committed design document is blunt about this: all eighteen upgrades are
+coefficients, and the only opponent, `CMS`, is "a timer wearing a uniform" —
+six scripted messages on fixed attention thresholds. There is exactly one
+decision in the game.
+
+This is the whole subject of Phase C, which is sequenced into nine increments.
+Increment 0 (the plumbing) is done. It is listed here because it is the largest
+single piece of known debt in the repository, and because a reader should not
+have to infer it from a design document.
+
+=== C2 — `CMS` still exists alongside its replacement *(OPEN, scheduled)*
+
+Increment 0 split `S.cms` into `S.pols` and `S.once` and introduced `pol()`,
+but the `CMS` array and its threshold loop still drive policy. It is scheduled
+to die in increment 2, with `grep -c 'S\.cms\|CMS'` returning 0 as the gate.
+
+=== C3 — `st[].o` is written and never read *(ACCEPTED, deliberate)*
+
+Increment 0 added an owner field to each region and routes all six writes
+through `setOwn()`. Nothing reads it yet; the rival increments will. Recorded
+so it is not mistaken for a dead field and removed.
+
+== Test and proof debt
+
+=== P1 — no formal proof ledger, and none is claimed *(ACCEPTED)*
+
+Unlike the sibling `f19-stealth-glider`, this repo makes no formal claims and
+carries no proof obligations. `AUDIT.adoc` says so explicitly, and
+`.machine_readable/rsr-profile.a2ml` records it as a deliberate deviation. This
+is a *correct* absence: inventing a verification ledger for an idle toy would
+be false rigour, and the manifest already forbids it in those words.
+
+=== P2 — the differential harness is not wired to CI *(OPEN)*
+
+`tests/differential/` compares the simulation against a git baseline under a
+fixed seed. It runs by hand and is not a gate, because it needs `bun` and a
+baseline ref and choosing the baseline is a judgement.
+
+A golden-file variant *would* be CI-able — commit expected trajectories for N
+seeds, regenerate and diff on every PR — and would catch unintended behaviour
+change automatically. Not done; worth doing before the increments get large.
+
+=== P3 — the harness cannot see sub-RNG-resolution changes *(ACCEPTED, measured)*
+
+Measured, not theorised: perturbing a leak coefficient by 2% is *not* detected.
+The line executes; no `rnd()` draw ever lands in the shifted band. Large
+perturbations of the same line are caught immediately.
+
+A pass therefore means "no behaviour change this run could observe", not "this
+coefficient is correct". Recorded in `AUDIT.adoc` too, because the temptation
+to read it as the stronger claim is real.
+
+=== P4 — coverage needs two scenarios and neither suffices *(ACCEPTED, reported)*
+
+`PLAY` reaches 6/6 policies but only ~11/18 upgrades before a run ends; `COVER`
+grants headroom to reach 18/18 but wins before the later policies fire. The
+harness prints both coverage lines for this reason. Two negative tests were
+inert until this was found, which is why it is measured rather than assumed.
+
+=== P5 — nothing tests rendering, input, projection or the globe *(ACCEPTED)*
+
+The differential harness stubs the DOM and tests the simulation only. The globe
+checks in `AUDIT.adoc` were run once, by hand, and are not repeatable. Any
+claim about the renderer is a human observation.
+
+== CI/CD debt
+
+=== I1 — one malformed lockfile line takes out every workflow *(OPEN — PR #18)*
+
+A reusable-caller entry was written into the lockfile's `dependencies:` map
+instead of `workflows:`. Every other value under `dependencies` is an object
+describing a pinned action, so a bare list there makes the file unparseable —
+and an unparseable lockfile is rejected before any job starts, for *every*
+workflow in the repo. `ci`, `pages` and `Secret Scanner` all went red in the
+same commit while nothing about them changed.
+
+Fixed in PR #18, verified by all three going green. Kept here until merged.
+
+The generalisable signature, worth keeping: *one commit turning every workflow
+in a repo red simultaneously means the lockfile, not the workflows.*
+
+=== I2 — the integrity gate is a grep suite, and is honest about it *(ACCEPTED)*
+
+`ci.yml` runs five greps: the file exists and is well-formed HTML; no
+`fetch`/`eval`/`WebSocket`/`new Function`; no unsubstituted double-brace
+upper-snake placeholder tokens; SPDX on every `.a2ml`; every action ref
+SHA-pinned. That is genuinely all it checks. It
+is named `integrity` rather than `verify` deliberately, and `AUDIT.adoc`
+explains why.
+
+Two known sharp edges, both documented: `fetch\(` has no word boundary, so a
+helper named `prefetch(` would fail the build; and the placeholder grep runs
+over the whole tree, so a placeholder token written *as an example* in a design
+document fails CI just as surely as a real leak.
+
+That second edge is not hypothetical. The first draft of this very file
+described the rule using a literal example token, and duly failed the gate it
+was describing. It is written in prose here for exactly that reason — which is
+also the cheapest available demonstration that the check is real.
+
+=== I3 — SonarCloud fails on PR #17 and is not understood *(OPEN)*
+
+`SonarCloud Code Analysis` passes on PR #18 (a one-line YAML move) and fails on
+PR #17 (which adds JavaScript test files). The likely cause is code smells in
+the new `tests/differential/*.js`, but this has *not* been confirmed — the
+finding detail is on the SonarCloud dashboard and has not been read.
+
+Listed as not-understood rather than guessed at.
+
+=== I4 — three ecosystems still show Dependabot failures in the run history *(ACCEPTED)*
+
+`hex`, `nix` and `pip` appear as failures when browsing Actions. They are
+*historical*: dated 2026-08-04, before #12 pruned `dependabot.yml` to the two
+ecosystems this repo actually has (`github-actions`, `npm`). The committed
+config is correct today.
+
+Recorded because the run list is misleading at a glance, and someone will
+otherwise re-diagnose it. Same for `CodeQL Security Analysis`, whose last
+failure is dated 2026-08-01 against a `codeql.yml` that #11 deleted; default
+setup is `configured` for `actions` and green.
+
+== Repository hygiene
+
+=== H1 — two funding files with contradictory content *(FIXED in this commit)*
+
+`.github/funding.yml` said `github: metadatastician`. `.github/FUNDING.yml`
+said, in prose, "No funding is solicited for this project." GitHub honours the
+uppercase name, so the lowercase file was inert — an invisible contradiction
+that would eventually have been read as intent. The lowercase file is removed;
+the documented one stays.
+
+=== H2 — six files linked to a `GOVERNANCE.adoc` that does not exist *(FIXED in this commit)*
+
+The file is `GOVERNANCE.md`. `README.md`, `MAINTAINERS.adoc`,
+`0-AI-MANIFEST.a2ml` and three contractiles pointed at `.adoc`. All corrected;
+every relative link in the human documentation set now resolves.
+
+== What was checked to produce this
+
+* Every relative link in every `.md` and `.adoc` at the root, resolved against
+  the filesystem.
+* Every `SPDX-License-Identifier` in the tree, tallied by licence and compared
+  against `LICENSES/`.
+* `package.json`, `CITATION.cff`, `.editorconfig` checked individually for
+  headers they cannot carry.
+* The last 30–40 Actions runs on `main`, *with their dates*, so historical
+  failures are not reported as current — which changed the verdict on four
+  entries.
+* All five `ci.yml` steps, run locally.
+* The differential harness, against `origin/main`.
+
+Not checked: the SonarCloud finding detail (I3); the wiki's accuracy against
+the code; anything about the renderer beyond what `AUDIT.adoc` already records.

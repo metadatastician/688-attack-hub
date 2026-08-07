@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 // Minimal DOM stub so the game's script can be loaded and driven outside a
 // browser. It is deliberately dumb: every element accepts every call and
 // records nothing. We are testing the SIMULATION, not the rendering — if a

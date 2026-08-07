@@ -13,6 +13,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Seeded, replayable runs.** `?seed=N` replays a run exactly, including
+  across restart; `?fast=N` runs the clock up to 40× so a whole game can be
+  watched in under a minute. Both read `location.search`, a read-only DOM
+  property — no fetch, no eval, no dependency, still one self-contained file.
+  Unseeded, the seed comes from the clock, so ordinary play is as varied as it
+  was. This matters beyond convenience: `Math.random()` sat at five sites, so
+  no two runs were comparable and balance could not be assessed at all, only
+  felt.
+- **A differential test** at `tests/differential/`. It runs the simulation
+  against a git baseline under the same seed and diffs the state trajectory
+  tick by tick, which is the only way to check a refactor's claim of "no
+  behaviour change" in a file with no other harness. Not a gate and not
+  coverage — it needs `bun` and a baseline ref, and `AUDIT.adoc` records what
+  it cannot see.
+- **`DEBT.adoc`**, a debt register by kind (licence, documentation, code,
+  tests/proof, CI/CD), with evidence for every entry and an explicit
+  distinction between what is owed, what is flagged for the owner, and what is
+  a deliberate limitation rather than a TODO.
+
+### Changed
+
+- **`S.cms` split into `S.pols` and `S.once`.** It had been holding three
+  unrelated things — the six countermeasure keys, the narrative-beat markers,
+  and a one-shot flag — so "is a policy in force" and "have we said this line
+  yet" were the same question. `S.cms` was deleted rather than aliased, so any
+  missed reference throws on the first tick.
+- **One write path for three things that had several**: `setOwn()` is now the
+  only writer of region state (six sites assigned it directly, one inside a
+  loop in `step()`); `ekey()` normalises link keys at write time, so reads no
+  longer have to check both orders; `mods()` holds every upgrade and policy
+  coefficient in one memoised place. `has()` is kept for the one-bit behaviour
+  switches, because a boolean is the right expression of a conditional.
+- **`package.json` no longer runs Python.** `serve` was
+  `python3 -m http.server`; Python is banned estate-wide with no exceptions.
+  Replaced with `bun run scripts/serve.js`, which needs no dependency and keeps
+  the repo's "nothing to install" claim true. You still do not need it — the
+  file opens from disk.
+
+### Fixed
+
+- **A malformed lockfile line was taking out every workflow in the repo.** A
+  reusable-caller entry had been written into `actions.lock`'s `dependencies:`
+  map instead of `workflows:`; every other value there is an object describing
+  a pinned action, so a bare list made the file unparseable, and an unparseable
+  lockfile is rejected before any job starts. `ci`, `pages` and `Secret
+  Scanner` all went red in the same commit while nothing about them changed.
+- **Six files linked to a `GOVERNANCE.adoc` that does not exist** — the file is
+  `GOVERNANCE.md`. Every relative link in the documentation set now resolves.
+- **Two funding files contradicted each other.** `.github/funding.yml` said
+  `github: metadatastician`; `.github/FUNDING.yml` said in prose that no
+  funding is solicited. GitHub honours the uppercase name, so the lowercase one
+  was an inert contradiction. Removed.
+
 - **Orthographic globe view**, behind a FLAT / GLOBE toggle in the footer.
   Flat remains the default. Hand-rolled — no library, no build step, no
   network call — because the map data was already spherical and only the

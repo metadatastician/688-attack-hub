@@ -51,8 +51,8 @@ tree, not a generic template.
 - enforced-by: not yet automated (documentary)
 
 ### governance-docs
-- description: GOVERNANCE.adoc, MAINTAINERS.adoc, CODEOWNERS must exist
-- run: test -f GOVERNANCE.adoc && test -f MAINTAINERS.adoc && test -f .github/CODEOWNERS
+- description: GOVERNANCE.md, MAINTAINERS.adoc, CODEOWNERS must exist
+- run: test -f GOVERNANCE.md && test -f MAINTAINERS.adoc && test -f .github/CODEOWNERS
 - severity: critical
 - enforced-by: not yet automated (documentary)
 
