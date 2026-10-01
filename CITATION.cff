@@ -12,6 +12,7 @@ type: software
 authors:
   - family-names: "Jewell"
     given-names: "Jonathan D. A."
+    orcid: "https://orcid.org/0000-0002-3078-6652"
     alias: "hyperpolymath"
 version: "0.1.0"
 date-released: "2026-07-21"
