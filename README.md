@@ -2,6 +2,8 @@
 
 # 688 Attack Hub
 
+image:https://img.shields.io/coderabbit/prs/github/metadatastician/688-attack-hub?utm_source=oss&utm_medium=github&utm_campaign=metadatastician%2F688-attack-hub&labelColor=171717&color=FF570A&label=CodeRabbit+Reviews[CodeRabbit Pull Request Reviews, link="https://coderabbit.ai"]
+
 ### *AS688 · 10BASE-T · Unmanaged repeater · 20 port*
 
 **A browser idle/strategy toy** about quietly spreading a rogue network
